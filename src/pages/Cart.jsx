@@ -108,7 +108,7 @@ export default function Cart() {
               </div>
               <button
                 onClick={handleCheckout}
-                className="bg-slate-50 text-slate-900 py-3 px-6 md:px-8 rounded-md hover:bg-brown-700 transition-colors duration-200 text-base md:text-lg font-semibold w-full mt-4"
+                className="bg-slate-50 text-slate-900 py-2 px-4 rounded-md hover:bg-lime-600 transition-colors duration-200 text-sm font-semibold  mt-4"
               >
                 Proceed to Payment
               </button>
