@@ -43,7 +43,7 @@ export default function Products() {
      fetchProducts();
   }, []);
 
-  useEffect(() => {
+  const applyFilters = (products, searchTerm, selectedCategory, sortBy) => {
     let filtered = products;
 
     // Filter by search term
@@ -78,6 +78,11 @@ export default function Products() {
       });
     }
 
+    return filtered;
+  };
+
+  useEffect(() => {
+    const filtered = applyFilters(products, searchTerm, selectedCategory, sortBy);
     setFilteredProducts(filtered);
   }, [searchTerm, selectedCategory, sortBy, products]);
 
