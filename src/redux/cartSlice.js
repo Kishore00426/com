@@ -24,6 +24,7 @@ const cartSlice = createSlice({
   name: 'cart',
   initialState: {
     items: loadCartFromStorage(),
+    discountPercentage: 0,
   },
   reducers: {
     addToCart: (state, action) => {
@@ -54,12 +55,24 @@ const cartSlice = createSlice({
     },
     clearCart: (state) => {
       state.items = [];
+      state.discountPercentage = 0;
       saveCartToStorage(state.items);
+    },
+    applyDiscount: (state, action) => {
+      const code = action.payload;
+      if (code === 'DISCOUNT10') {
+        state.discountPercentage = 10;
+      } else {
+        state.discountPercentage = 0;
+      }
+    },
+    removeDiscount: (state) => {
+      state.discountPercentage = 0;
     },
   },
 });
 
-export const { addToCart, removeFromCart, updateQuantity, clearCart } = cartSlice.actions;
+export const { addToCart, removeFromCart, updateQuantity, clearCart, applyDiscount, removeDiscount } = cartSlice.actions;
 
 // Selectors
 export const selectCartItems = (state) => state.cart.items;
@@ -67,5 +80,11 @@ export const selectTotalPrice = (state) =>
   state.cart.items.reduce((total, item) => total + item.price * item.quantity, 0);
 export const selectTotalItems = (state) =>
   state.cart.items.reduce((total, item) => total + item.quantity, 0);
+export const selectDiscountPercentage = (state) => state.cart.discountPercentage;
+export const selectDiscountedTotal = (state) => {
+  const subtotal = selectTotalPrice(state);
+  const discount = subtotal * (state.cart.discountPercentage / 100);
+  return subtotal - discount;
+};
 
 export default cartSlice.reducer;
