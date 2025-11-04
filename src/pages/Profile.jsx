@@ -1,17 +1,37 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useWishlist } from '../context/WishlistContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { addToCart } from '../redux/cartSlice';
 
 export default function Profile() {
   const [userDetails, setUserDetails] = useState({
     name: '',
     email: '',
+    phone: '',
     address: '',
     city: '',
     zipCode: ''
   });
   const { wishlistItems, removeFromWishlist } = useWishlist();
   const [isEditing, setIsEditing] = useState(false);
+  const dispatch = useDispatch();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
+
+  const totalPages = Math.ceil(wishlistItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = wishlistItems.slice(startIndex, endIndex);
+
+  const handleAddToCart = (product) => {
+    dispatch(addToCart({ product }));
+    toast.success('Added to cart!');
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   useEffect(() => {
     // Load user details from localStorage
@@ -53,7 +73,7 @@ export default function Profile() {
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200"
+                  className="bg-neutral-200 text-slate-700 py-2 px-4 rounded-md hover:bg-blue-700 hover:text-slate-100 transition-colors duration-200"
                 >
                   Edit
                 </button>
@@ -101,6 +121,20 @@ export default function Profile() {
                   disabled={!isEditing}
                   className="w-full px-3 py-2 bg-zinc-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                   placeholder="Enter your email"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium mb-2">Phone Number</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={userDetails.phone}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className="w-full px-3 py-2 bg-zinc-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  placeholder="Enter your phone number"
                 />
               </div>
 
@@ -155,30 +189,71 @@ export default function Profile() {
             {wishlistItems.length === 0 ? (
               <p className="text-gray-400">Your wishlist is empty.</p>
             ) : (
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {wishlistItems.map((item) => (
-                  <div key={item.id} className="border border-gray-700 rounded-md p-4">
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={item.thumbnail}
-                        alt={item.title}
-                        className="w-16 h-16 object-cover rounded-md"
-                      />
-                      <div className="flex-grow">
-                        <h4 className="font-semibold">{item.title}</h4>
-                        <p className="text-sm text-gray-400">{item.category}</p>
-                        <p className="text-green-600 font-bold">${item.price.toFixed(2)}</p>
+              <>
+                <div className="space-y-4">
+                  {currentItems.map((item) => (
+                    <div key={item.id} className="border border-gray-700 rounded-md p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <img
+                          src={item.thumbnail}
+                          alt={item.title}
+                          className="w-16 h-16 object-cover rounded-md mx-auto sm:mx-0"
+                        />
+                        <div className="flex-grow text-center sm:text-left">
+                          <h4 className="font-semibold">{item.title}</h4>
+                          <p className="text-sm text-gray-400">{item.category}</p>
+                          <p className="text-teal-200 font-bold">${item.price.toFixed(2)}</p>
+                        </div>
+                        <div className="flex flex-row sm:flex-col space-x-2 sm:space-x-0 sm:space-y-2 justify-center sm:justify-start">
+                          <button
+                            onClick={() => handleAddToCart(item)}
+                            className="bg-green-600 text-white py-1 px-3 rounded-md hover:bg-green-700 transition-colors duration-200 text-xs"
+                          >
+                            Add to Cart
+                          </button>
+                          <button
+                            onClick={() => removeFromWishlist(item.id)}
+                            className="text-slate-100 hover:bg-red-300 text-sm bg-red-600 rounded-md p-1"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => removeFromWishlist(item.id)}
-                        className="text-red-500 hover:text-red-400 text-sm"
-                      >
-                        Remove
-                      </button>
                     </div>
+                  ))}
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex justify-center mt-6 space-x-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 bg-zinc-700 text-white rounded-md hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-1 rounded-md ${
+                          currentPage === page
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-zinc-700 text-white hover:bg-zinc-600'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 bg-zinc-700 text-white rounded-md hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>

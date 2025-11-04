@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
+  const [expandedOrder, setExpandedOrder] = useState(null);
 
   useEffect(() => {
     const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
     setOrders(storedOrders);
   }, []);
+
+  const toggleOrderExpansion = (orderId) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  };
 
   return (
     <main className="flex-grow p-6">
@@ -21,71 +27,94 @@ export default function Orders() {
           <div className="space-y-6">
             {orders.map((order) => (
               <div key={order.id} className="bg-zinc-950 rounded-lg shadow-md p-6">
+                {/* <div className="text-right">
+                    <p className="text-amber-700 text-sm">Payment Method: {order.paymentMethod === 'card' ? 'Credit Card' : 'PayPal'}</p>
+                  </div> */}
+                <div className="mb-4">
+                  
+                  <h4 className="text-lg font-semibold underline">Order Summary :</h4>
+                  
+                </div>
+               
                 <div className="flex justify-between items-start mb-4">
                   <div>
+                    <h4 className="font-semibold mb-1">Shipping Address:</h4>
+                    <p className="text-gray-300 text-sm">{order.shippingInfo.name}</p>
+                    <p className="text-gray-300 text-sm">{order.shippingInfo.address}</p>
+                    <p className="text-gray-300 text-sm">{order.shippingInfo.city}, {order.shippingInfo.zipCode}</p>
+                  </div>
+                  <div className="text-right">
                     <h3 className="text-xl font-semibold">Order #{order.id}</h3>
                     <p className="text-gray-400 text-sm">
                       Placed on {new Date(order.date).toLocaleDateString()} at {new Date(order.date).toLocaleTimeString()}
                     </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-green-600 font-bold text-lg">${order.total.toFixed(2)}</p>
-                    <p className="text-gray-400 text-sm">{order.paymentMethod === 'card' ? 'Credit Card' : 'PayPal'}</p>
+                    <p className="text-amber-700 text-sm">Payment Method: {order.paymentMethod === 'card' ? 'Credit Card' : 'PayPal'}</p>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-700 pt-4">
-                  <div className="overflow-x-auto">
-                    <div className="flex space-x-4 pb-2">
-                      {order.items.map((item) => (
-                        <div key={item.id} className="flex-shrink-0 w-48 bg-zinc-800 rounded-lg p-3">
-                          <img
-                            src={item.thumbnail}
-                            alt={item.title}
-                            className="w-full h-24 object-cover rounded-md mb-2"
-                          />
-                          <p className="font-medium text-sm truncate">{item.title}</p>
-                          <p className="text-xs text-gray-400">Qty: {item.quantity}</p>
-                          <p className="font-bold text-green-600 text-sm">${(item.price * item.quantity).toFixed(2)}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <button
+                  onClick={() => toggleOrderExpansion(order.id)}
+                  className="flex items-center justify-center w-full p-4 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors"
+                >
+                  {expandedOrder === order.id ? (
+                    <ChevronUpIcon className="h-4 w-4" />
+                  ) : (
+                    <ChevronDownIcon className="h-4 w-4" />
+                  )}
+                </button>
 
-                <details className="border-t border-gray-700 pt-4">
-                  <summary className="cursor-pointer text-lg font-semibold mb-2">Additional Information</summary>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-semibold mb-2">Shipping Address:</h4>
-                      <p className="text-gray-300">{order.shippingInfo.name}</p>
-                      <p className="text-gray-300">{order.shippingInfo.address}</p>
-                      <p className="text-gray-300">{order.shippingInfo.city}, {order.shippingInfo.zipCode}</p>
-                      <p className="text-gray-300">{order.shippingInfo.email}</p>
+                {expandedOrder === order.id && (
+                  <div className="mt-4">
+                    <div className="overflow-x-auto mb-4">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-700">
+                            <th className="text-left py-2">Product Name</th>
+                            <th className="text-center py-2">Quantity</th>
+                            <th className="text-center py-2">Price</th>
+                            <th className="text-center py-2">Discount</th>
+                            <th className="text-center py-2">Offers</th>
+                            <th className="text-center py-2">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {order.items.map((item) => (
+                            <tr key={item.id} className="border-b border-gray-700">
+                              <td className="py-2">{item.title}</td>
+                              <td className="text-center py-2">{item.quantity}</td>
+                              <td className="text-center py-2">${item.price.toFixed(2)}</td>
+                              <td className="text-center py-2">{item.discountPercentage ? `${item.discountPercentage.toFixed(0)}%` : 'N/A'}</td>
+                              <td className="text-center py-2">{item.discountPercentage > 0 ? 'Discount Applied' : 'No Offers'}</td>
+                              <td className="text-center py-2 font-bold">${(item.price * item.quantity).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">Order Summary:</h4>
-                      <div className="space-y-1 text-sm">
+                    <div className="text-left">
+                      <div className="space-y-1 text-sm ">
                         <div className="flex justify-between">
-                          <span>Subtotal:</span>
-                          <span>${order.subtotal.toFixed(2)}</span>
+                          <span>Subtotal :</span>
+                          <span className='md:mr-5'>${order.subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Tax:</span>
-                          <span>${order.tax.toFixed(2)}</span>
+                          <span>Tax :</span>
+                          <span className='md:mr-5'>${order.tax.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Shipping:</span>
-                          <span>{order.shipping === 0 ? 'FREE' : `$${order.shipping.toFixed(2)}`}</span>
+                          <span>Shipping :</span>
+                          <span className='md:mr-5'>{order.shipping === 0 ? 'FREE' : `$${order.shipping.toFixed(2)}`}</span>
                         </div>
                         <div className="flex justify-between font-bold border-t border-gray-600 pt-1">
-                          <span>Total:</span>
-                          <span>${order.total.toFixed(2)}</span>
+                          <span>Total</span>
+                          <span className='md:mr-5'>${order.total.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                </details>
+                )}
+
+
               </div>
             ))}
           </div>

@@ -5,6 +5,8 @@ import { useDispatch } from 'react-redux';
 import { addToCart } from '../redux/cartSlice';
 import { useWishlist } from '../context/WishlistContext';
 import Loader from '../components/Loader';
+import ProductFilters from '../components/ProductFilters';
+import AddToCartButton from '../components/AddToCartButton';
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -142,71 +144,18 @@ export default function Products() {
       <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl font-semibold text-center mb-8">Our Products</h2>
 
-        {/* Search and Filter Section */}
-        <div className="mb-8 bg-inherit p-6 rounded-lg">
-          <div className="flex flex-col xl:flex-row gap-4 items-center">
-            {/* Search Input */}
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-200  border-2 border-gray-600 rounded-md text-slate-950 placeholder-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-50"
-              />
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex items-center gap-2">
-              {/* <label htmlFor="category" className="text-sm font-medium text-gray-300">Category:</label> */}
-              <select
-                id="category"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 bg-zinc-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-slate-50"
-              >
-                <option value="">All Categories</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Sort By */}
-            <div className="flex items-center gap-2">
-              <label htmlFor="sort" className="text-sm font-medium text-gray-300">Sort by:</label>
-              <select
-                id="sort"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 bg-zinc-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-slate-50"
-              >
-                <option value="">Default</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="name">Name</option>
-                <option value="rating">Rating</option>
-              </select>
-            </div>
-
-            {/* Clear Filters Button */}
-            {(searchTerm || selectedCategory || sortBy) && (
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200"
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
-
-          {/* Results Count */}
-          <div className="mt-4 text-sm text-gray-400">
-            Showing {filteredProducts.length} of {products.length} products
-          </div>
-        </div>
+        <ProductFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          categories={categories}
+          clearFilters={clearFilters}
+          filteredCount={filteredProducts.length}
+          totalCount={products.length}
+        />
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -269,12 +218,7 @@ export default function Products() {
                     className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center"
                   />
                 </div> */}
-                <button
-                  onClick={() => handleAddToCart(product)}
-                  className="w-full bg-zinc-300 text-slate-900 py-2 px-4 rounded-md hover:bg-slate-50 focus:outline-none  transition-colors duration-200"
-                >
-                  Add to Cart
-                </button>
+                <AddToCartButton product={product} quantity={quantities[product.id] || 1} />
               </div>
             </div>
           ))}
