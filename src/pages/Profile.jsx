@@ -26,6 +26,7 @@ export default function Profile() {
 
   const handleAddToCart = (product) => {
     dispatch(addToCart({ product }));
+    removeFromWishlist(product.id);
     toast.success('Added to cart!');
   };
 
@@ -211,7 +212,7 @@ export default function Profile() {
                             onClick={() => handleAddToCart(item)}
                             className="bg-green-600 text-white py-1 px-3 rounded-md hover:bg-green-700 transition-colors duration-200 text-xs whitespace-nowrap"
                           >
-                            Add to Cart
+                            Move to Cart
                           </button>
                           <button
                             onClick={() => removeFromWishlist(item.id)}
