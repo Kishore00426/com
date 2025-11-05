@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import DownloadInvoiceButton from '../components/DownloadInvoiceButton';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -27,41 +28,30 @@ export default function Orders() {
           <div className="space-y-6">
             {orders.map((order) => (
               <div key={order.id} className="bg-zinc-950 rounded-lg shadow-md p-6">
-                {/* <div className="text-right">
-                    <p className="text-amber-700 text-sm">Payment Method: {order.paymentMethod === 'card' ? 'Credit Card' : 'PayPal'}</p>
-                  </div> */}
-                <div className="mb-4">
-                  
-                  <h4 className="text-lg font-semibold underline">Order Summary :</h4>
-                  
-                </div>
-               
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h4 className="font-semibold mb-1">Shipping Address:</h4>
-                    <p className="text-gray-300 text-sm">{order.shippingInfo.name}</p>
-                    <p className="text-gray-300 text-sm">{order.shippingInfo.address}</p>
-                    <p className="text-gray-300 text-sm">{order.shippingInfo.city}, {order.shippingInfo.zipCode}</p>
-                  </div>
-                  <div className="text-right">
-                    <h3 className="text-xl font-semibold">Order #{order.id}</h3>
-                    <p className="text-gray-400 text-sm">
-                      Placed on {new Date(order.date).toLocaleDateString()} at {new Date(order.date).toLocaleTimeString()}
+                  <div className="text-left">
+                    <h3 className="text-xl font-semibold">Order No: #{order.id}</h3>
+                   <p className="text-gray-400 text-sm">
+                      Order Placed on : <span className='text-orange-200'> {new Date(order.date).toLocaleDateString()} at {new Date(order.date).toLocaleTimeString()}</span>
                     </p>
-                    <p className="text-amber-700 text-sm">Payment Method: {order.paymentMethod === 'card' ? 'Credit Card' : 'PayPal'}</p>
+                    <p className=" text-sm">Payment Method: <span className='text-sky-300'>{
+                      order.paymentMethod === 'card' ? 'Credit Card' :
+                      order.paymentMethod === 'paypal' ? 'PayPal' :
+                      order.paymentMethod === 'upi' ? 'UPI' :
+                      order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod
+                    }</span></p>
                   </div>
+                  <button
+                    onClick={() => toggleOrderExpansion(order.id)}
+                    className="flex items-center justify-center p-4 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors"
+                  >
+                    {expandedOrder === order.id ? (
+                      <ChevronUpIcon className="h-4 w-4" />
+                    ) : (
+                      <ChevronDownIcon className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
-
-                <button
-                  onClick={() => toggleOrderExpansion(order.id)}
-                  className="flex items-center justify-center w-full p-4 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors"
-                >
-                  {expandedOrder === order.id ? (
-                    <ChevronUpIcon className="h-4 w-4" />
-                  ) : (
-                    <ChevronDownIcon className="h-4 w-4" />
-                  )}
-                </button>
 
                 {expandedOrder === order.id && (
                   <div className="mt-4">
@@ -109,6 +99,15 @@ export default function Orders() {
                           <span>Total</span>
                           <span className='md:mr-5'>${order.total.toFixed(2)}</span>
                         </div>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <h4 className="font-semibold mb-1">Shipping Address:</h4>
+                      <p className="text-gray-300 text-sm">{order.shippingInfo.name}</p>
+                      <p className="text-gray-300 text-sm">{order.shippingInfo.address}</p>
+                      <div className="flex justify-between items-center">
+                        <p className="text-gray-300 text-sm">{order.shippingInfo.city}, {order.shippingInfo.zipCode}</p>
+                        <DownloadInvoiceButton order={order} />
                       </div>
                     </div>
                   </div>

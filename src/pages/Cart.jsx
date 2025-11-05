@@ -48,13 +48,13 @@ export default function Cart() {
 
         {cartItems.length === 0 ? (
           <div className="bg-zinc-950 rounded-lg shadow-md p-6 md:p-8 text-center">
-            <p className="text-gray-600 text-lg">Your cart is empty.</p>
-            <p className="text-gray-500 mt-2">Add some delicious coffee to get started!</p>
+            <p className="text-orange-200 text-lg">Your cart is empty!! 🛒</p>
+            <p className="text-gray-500 mt-2">Add some awsome products get started!</p>
             <a
               href="/products"
-              className="inline-block mt-4 bg-brown-600 text-white py-2 px-6 rounded-md hover:bg-brown-700 transition-colors duration-200"
+              className="inline-block mt-4 bg-brown-600 hover:bg-neutral-800 text-white py-2 px-6 rounded-md hover:bg-brown-700 transition-colors duration-200"
             >
-              Browse Products
+              Browse Products →
             </a>
           </div>
         ) : (
@@ -83,7 +83,7 @@ export default function Cart() {
                       />
                       <button
                         onClick={() => handleRemoveItem(item.id)}
-                        className="text-red-800 hover:text-red-600 text-xs md:text-sm font-medium bg-slate-200 p-1 md:p-2 rounded"
+                        className="text-red-800 hover:text-red-600 text-xs md:text-sm font-medium bg-slate-200 p-1 md:p-1 rounded"
                       >
                         Remove
                       </button>
@@ -109,7 +109,7 @@ export default function Cart() {
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
                       placeholder="Enter coupon code"
-                      className="flex-1 px-3 py-2 bg-zinc-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-48 px-3 py-1 bg-zinc-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       disabled={couponApplied}
                     />
                     {!couponApplied ? (
@@ -157,12 +157,14 @@ export default function Cart() {
                     <span>${(discountedTotal + discountedTotal * 0.08 + (discountedTotal > 50 ? 0 : 9.99)).toFixed(2)}</span>
                   </div>
                 </div>
-                <button
-                  onClick={handleCheckout}
-                  className="mx-auto block bg-slate-50 text-slate-900 py-1 px-3 rounded-md hover:bg-lime-600 transition-colors duration-200 text-sm font-semibold mt-4"
-                >
-                  Proceed to checkout!
-                </button>
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={handleCheckout}
+                    className="bg-slate-50 text-slate-900 py-2 px-6 rounded-md hover:bg-lime-600 transition-colors duration-200 text-sm font-semibold"
+                  >
+                    Proceed to checkout!
+                  </button>
+                </div>
               </div>
             </div>
           </div>

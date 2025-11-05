@@ -19,7 +19,8 @@ export default function Checkout() {
     cardNumber: '',
     expiryDate: '',
     cvv: '',
-    paypalEmail: ''
+    paypalEmail: '',
+    upiId: ''
   });
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -72,7 +73,7 @@ export default function Checkout() {
 
       toast.success('Order placed successfully! Thank you for your purchase.');
       dispatch(clearCart());
-      navigate('/');
+      navigate('/order-success');
     }, 2000);
   };
 
@@ -95,10 +96,10 @@ export default function Checkout() {
 
   return (
     <main className="flex-grow p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl font-semibold text-center mb-8">Checkout</h2>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Payment Form */}
           <div className="bg-zinc-900 rounded-lg shadow-md p-6">
             <h3 className="text-xl font-semibold mb-6">Shipping & Payment Information</h3>
@@ -212,6 +213,38 @@ export default function Checkout() {
                       PayPal
                     </span>
                   </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="upi"
+                      checked={paymentMethod === 'upi'}
+                      onChange={() => handlePaymentMethodChange('upi')}
+                      className="mr-3"
+                    />
+                    <span className="flex items-center">
+                      <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 00-1 1v3.586l-.293.293a1 1 0 101.414 1.414L13 6.414V3a1 1 0 00-1-1z" clipRule="evenodd"/>
+                      </svg>
+                      UPI
+                    </span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={paymentMethod === 'cod'}
+                      onChange={() => handlePaymentMethodChange('cod')}
+                      className="mr-3"
+                    />
+                    <span className="flex items-center">
+                      <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/>
+                      </svg>
+                      Cash on Delivery
+                    </span>
+                  </label>
                 </div>
               </div>
 
@@ -284,6 +317,25 @@ export default function Checkout() {
                 </div>
               )}
 
+              {paymentMethod === 'upi' && (
+                <div className="border-t border-gray-700 pt-4 mt-6">
+                  <h4 className="text-lg font-semibold mb-4">UPI Information</h4>
+                  <div>
+                    <label htmlFor="upiId" className="block text-sm font-medium mb-2">UPI ID</label>
+                    <input
+                      type="text"
+                      id="upiId"
+                      name="upiId"
+                      value={formData.upiId}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 bg-zinc-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="yourname@upi"
+                    />
+                  </div>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={isProcessing}
@@ -292,6 +344,73 @@ export default function Checkout() {
                 {isProcessing ? 'Processing...' : `Complete Order - $${total.toFixed(2)}`}
               </button>
             </form>
+          </div>
+
+          {/* Order Summary */}
+          <div className="space-y-6">
+            <div className="bg-zinc-900 rounded-lg shadow-md p-6">
+              <h3 className="text-xl font-semibold mb-6">Order Summary</h3>
+
+              {/* Cart Items */}
+              <div className="space-y-4 mb-6">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="flex items-center space-x-4">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-16 h-16 object-cover rounded-md"
+                    />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-white">{item.name}</h4>
+                      <p className="text-sm text-gray-400">Qty: {item.quantity}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-white">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Order Totals */}
+              <div className="border-t border-gray-700 pt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Subtotal</span>
+                  <span className="text-white">${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Tax (8%)</span>
+                  <span className="text-white">${tax.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Shipping</span>
+                  <span className="text-white">
+                    {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
+                  </span>
+                </div>
+                <div className="border-t border-gray-700 pt-2 mt-2">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span className="text-white">Total</span>
+                    <span className="text-green-400">${total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+                 {/* done this just for ui enchancement */}
+            {/* Security Note */}
+            {/* <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
+                </svg>
+                <span className="text-sm text-green-400 font-medium">Secure Checkout</span>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                Your payment information is encrypted and secure.
+              </p>
+            </div> */} 
+           
           </div>
         </div>
       </div>

@@ -52,7 +52,7 @@ export default function Home() {
       </div>
       <br />
       <button className="mx-6 bg-zinc-900 text-white py-2 px-4 rounded-md hover:bg-brown-700 transition-colors duration-200">
-        <a href="/products" className="text-white no-underline">Show More products</a>
+        <a href="/products" className="text-white no-underline">Show More products → </a>
       </button>
     </main>
   );

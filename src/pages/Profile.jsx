@@ -70,28 +70,13 @@ export default function Profile() {
           <div className="bg-zinc-900 rounded-lg shadow-md p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold">Personal Information</h3>
-              {!isEditing ? (
+              {!isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
                   className="bg-neutral-200 text-slate-700 py-2 px-4 rounded-md hover:bg-blue-700 hover:text-slate-100 transition-colors duration-200"
                 >
                   Edit
                 </button>
-              ) : (
-                <div className="space-x-2">
-                  <button
-                    onClick={handleSave}
-                    className="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors duration-200"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors duration-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
               )}
             </div>
 
@@ -181,6 +166,23 @@ export default function Profile() {
                 </div>
               </div>
             </form>
+
+            {isEditing && (
+              <div className="flex justify-end space-x-2 mt-6 pt-4 border-t border-gray-700">
+                <button
+                  onClick={handleCancel}
+                  className="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors duration-200"
+                >
+                  Save
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Wishlist */}
@@ -199,21 +201,21 @@ export default function Profile() {
                           alt={item.title}
                           className="w-16 h-16 object-cover rounded-md mx-auto sm:mx-0"
                         />
-                        <div className="flex-grow text-center sm:text-left">
-                          <h4 className="font-semibold">{item.title}</h4>
+                        <div className="flex-grow text-center sm:text-left min-h-[3rem] flex flex-col justify-center">
+                          <h4 className="font-semibold line-clamp-2">{item.title}</h4>
                           <p className="text-sm text-gray-400">{item.category}</p>
                           <p className="text-teal-200 font-bold">${item.price.toFixed(2)}</p>
                         </div>
-                        <div className="flex flex-row sm:flex-col space-x-2 sm:space-x-0 sm:space-y-2 justify-center sm:justify-start">
+                        <div className="flex flex-row sm:flex-col space-x-2 sm:space-x-0 sm:space-y-2 justify-center sm:justify-start items-center">
                           <button
                             onClick={() => handleAddToCart(item)}
-                            className="bg-green-600 text-white py-1 px-3 rounded-md hover:bg-green-700 transition-colors duration-200 text-xs"
+                            className="bg-green-600 text-white py-1 px-3 rounded-md hover:bg-green-700 transition-colors duration-200 text-xs whitespace-nowrap"
                           >
                             Add to Cart
                           </button>
                           <button
                             onClick={() => removeFromWishlist(item.id)}
-                            className="text-slate-100 hover:bg-red-300 text-sm bg-red-600 rounded-md p-1"
+                            className="bg-red-600 text-white py-1 px-3 rounded-md hover:bg-red-700 transition-colors duration-200 text-xs whitespace-nowrap"
                           >
                             Remove
                           </button>
