@@ -30,16 +30,14 @@ export default function Orders() {
               <div key={order.id} className="bg-zinc-950 rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="text-left">
-                    <h3 className="text-xl font-semibold">Order No: #{order.id}</h3>
-                   <p className="text-gray-400 text-sm">
-                      Order Placed on : <span className='text-orange-200'> {new Date(order.date).toLocaleDateString()} at {new Date(order.date).toLocaleTimeString()}</span>
+                    <p className="text-gray-400 text-sm whitespace-nowrap">
+                      Order No: #{order.id} | Placed on: <span className='text-orange-200'>{new Date(order.date).toLocaleDateString()} at {new Date(order.date).toLocaleTimeString()}</span> | Payment Method: <span className='text-sky-300'>{
+                        order.paymentMethod === 'card' ? 'Credit Card' :
+                        order.paymentMethod === 'paypal' ? 'PayPal' :
+                        order.paymentMethod === 'upi' ? 'UPI' :
+                        order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod
+                      }</span>
                     </p>
-                    <p className=" text-sm">Payment Method: <span className='text-sky-300'>{
-                      order.paymentMethod === 'card' ? 'Credit Card' :
-                      order.paymentMethod === 'paypal' ? 'PayPal' :
-                      order.paymentMethod === 'upi' ? 'UPI' :
-                      order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod
-                    }</span></p>
                   </div>
                   <button
                     onClick={() => toggleOrderExpansion(order.id)}

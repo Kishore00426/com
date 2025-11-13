@@ -1,8 +1,3 @@
-# TODO: Enhance Checkout Page UI/UX
+# TODO: Update Orders Page Layout
 
-- [x] Implement two-column layout (form left, order summary right)
-- [x] Create order summary component showing cart items and totals
-- [x] Improve payment method selection layout
-- [x] Add progress indicators or section headers
-- [x] Add security badge for trust
-- [ ] Test responsive design and scrolling reduction
+- [x] Modify the order details display in Orders.jsx to ensure Order ID, Date, and Payment Method are on a single line instead of wrapping to multiple lines.
