@@ -11,7 +11,7 @@ export default function Header() {
   const location = useLocation();
 
   return (
-    <header className="w-full backdrop-blur-2xl bg-invert sticky top-0 z-10 p-4 shadow-md">
+    <header className="w-full backdrop-blur-xl bg-transparent sticky top-0 z-10 p-4 shadow-md">
       <div className="max-w-7xl mx-auto flex justify-between items-center px-4">
         <div className="flex items-center gap-3">
           <img
