@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { useWishlist } from '../context/WishlistContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { addToCart } from '../redux/cartSlice';
+import { removeFromWishlist, selectWishlistItems } from '../redux/wishlistSlice';
 
 export default function Profile() {
   const [userDetails, setUserDetails] = useState({
@@ -13,7 +13,7 @@ export default function Profile() {
     city: '',
     zipCode: ''
   });
-  const { wishlistItems, removeFromWishlist } = useWishlist();
+  const wishlistItems = useSelector(selectWishlistItems);
   const [isEditing, setIsEditing] = useState(false);
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(1);
@@ -26,7 +26,7 @@ export default function Profile() {
 
   const handleAddToCart = (product) => {
     dispatch(addToCart({ product }));
-    removeFromWishlist(product.id);
+    dispatch(removeFromWishlist(product.id));
     toast.success('Added to cart!');
   };
 
@@ -215,7 +215,7 @@ export default function Profile() {
                             Move to Cart
                           </button>
                           <button
-                            onClick={() => removeFromWishlist(item.id)}
+                            onClick={() => dispatch(removeFromWishlist(item.id))}
                             className="bg-red-600 text-white py-1 px-3 rounded-md hover:bg-red-700 transition-colors duration-200 text-xs whitespace-nowrap"
                           >
                             Remove

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../redux/cartSlice';
-import { useWishlist } from '../context/WishlistContext';
+import { addToWishlist, removeFromWishlist, selectWishlistItems } from '../redux/wishlistSlice';
 import Loader from '../components/Loader';
 
 export default function ProductDetails() {
@@ -14,7 +14,8 @@ export default function ProductDetails() {
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [similarProducts, setSimilarProducts] = useState([]);
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const wishlistItems = useSelector(selectWishlistItems);
+  const isInWishlist = (id) => wishlistItems.some(item => item.id === id);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -53,10 +54,10 @@ export default function ProductDetails() {
 
   const handleWishlistToggle = () => {
     if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
+      dispatch(removeFromWishlist(product.id));
       toast.success(`${product.title} removed from wishlist!`);
     } else {
-      addToWishlist(product);
+      dispatch(addToWishlist(product));
       toast.success(`${product.title} added to wishlist!`);
     }
   };

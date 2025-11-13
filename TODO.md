@@ -1,3 +1,8 @@
-# TODO: Update Orders Page Layout
-
-- [x] Modify the order details display in Orders.jsx to ensure Order ID, Date, and Payment Method are on a single line instead of wrapping to multiple lines.
+# TODO: Migrate Wishlist to Redux
+- [x] Create src/redux/wishlistSlice.js with actions, localStorage persistence, and selectors
+- [x] Update src/redux/store.js to include wishlist reducer
+- [x] Update src/pages/Profile.jsx to use Redux hooks
+- [x] Update src/pages/Products.jsx to use Redux hooks
+- [x] Update src/pages/ProductDetails.jsx to use Redux hooks
+- [x] Update src/App.jsx to remove WishlistProvider
+- [x] Delete src/context/WishlistContext.jsx

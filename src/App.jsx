@@ -13,11 +13,10 @@ import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
-import { WishlistProvider } from "./context/WishlistContext";
 
 export default function App() {
   return (
-    <WishlistProvider>
+    <>
       <div className="min-h-screen flex flex-col">
         <Header />
         <Routes>
@@ -44,6 +43,6 @@ export default function App() {
           },
         }}
       />
-    </WishlistProvider>
+    </>
   );
 }
