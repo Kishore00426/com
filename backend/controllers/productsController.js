@@ -639,7 +639,7 @@ export const updateProduct = async (req, res) => {
     const categoryArray = body.categoryIds ? JSON.parse(body.categoryIds) : null;
     const tagArray = body.tags ? JSON.parse(body.tags) : null;
 
-    // 1️⃣ UPDATE PRODUCT DATA
+    // 1️ UPDATE PRODUCT DATA
     const updateData = { ...body };
     delete updateData.categoryIds;
     delete updateData.tags;
@@ -653,7 +653,7 @@ export const updateProduct = async (req, res) => {
     if (!updated)
       return res.status(404).json({ success: false, message: "Product not found" });
 
-    // 2️⃣ UPDATE CATEGORIES
+    // 2 UPDATE CATEGORIES
     if (categoryArray) {
       await db.delete(productCategories).where(eq(productCategories.productId, id));
       const rows = categoryArray.map((c) => ({
@@ -663,7 +663,7 @@ export const updateProduct = async (req, res) => {
       await db.insert(productCategories).values(rows);
     }
 
-    // 3️⃣ UPDATE TAGS
+    // 3️ UPDATE TAGS
     if (tagArray) {
       await db.delete(productTags).where(eq(productTags.productId, id));
       const rows = tagArray.map((t) => ({
@@ -673,7 +673,7 @@ export const updateProduct = async (req, res) => {
       await db.insert(productTags).values(rows);
     }
 
-    // 4️⃣ UPDATE IMAGE IF NEW ONE PROVIDED
+    // 4️ UPDATE IMAGE IF NEW ONE PROVIDED
     if (req.files && req.files.original) {
       const originalFile = req.files.original[0].filename;
       const thumbFile = req.files.thumbnail[0].filename;
