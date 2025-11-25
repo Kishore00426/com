@@ -5,31 +5,97 @@ import {
   text,
   integer,
   timestamp,
-  jsonb,
   decimal
 } from "drizzle-orm/pg-core";
 
+// ------------------------
+//  CATEGORIES TABLE
+// ------------------------
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// ------------------------
+//  TAGS TABLE
+// ------------------------
+export const tags = pgTable("tags", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+// ------------------------
+//  PRODUCTS TABLE
+// ------------------------
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
-  category: varchar("category", { length: 255 }).notNull(),
-
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   discount: decimal("discount", { precision: 5, scale: 2 }).default("0"),
-
   stock: integer("stock").notNull(),
   availableStock: integer("available_stock").notNull(),
-
   brand: varchar("brand", { length: 255 }),
   warrantyInfo: varchar("warranty_info", { length: 255 }),
-
-  tags: jsonb("tags").default([]),
-  images: jsonb("images").default([]),
-
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
+
+// ------------------------
+//  PRODUCT_CATEGORIES (join table)
+// ------------------------
+export const productCategories = pgTable("product_categories", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id")
+    .notNull()
+    .references(() => categories.id, { onDelete: "cascade" })
+});
+
+// ------------------------
+//  PRODUCT_TAGS (join table)
+// ------------------------
+export const productTags = pgTable("product_tags", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  tagId: integer("tag_id")
+    .notNull()
+    .references(() => tags.id, { onDelete: "cascade" })
+});
+
+// ------------------------------------------------------------
+//  PRODUCT_IMAGES TABLE (3 columns: thumbnail, preview, original)
+// ------------------------------------------------------------
+export const productImages = pgTable("product_images", {
+  id: serial("id").primaryKey(),
+
+  productId: integer("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+
+  // Three separate URLs
+  thumbnailUrl: varchar("thumbnail_url", { length: 500 }),
+  previewUrl: varchar("preview_url", { length: 500 }),
+  originalUrl: varchar("original_url", { length: 500 }),
+
+  altText: varchar("alt_text", { length: 255 }),
+
+  position: integer("position").default(0),
+
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+
+
+
 
 //
 // WISHLIST TABLE
