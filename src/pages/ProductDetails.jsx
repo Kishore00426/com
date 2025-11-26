@@ -291,6 +291,10 @@ export default function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedImage, setSelectedImage] = useState("");
+  const [hoverImage, setHoverImage] = useState("");
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+const [lightboxImage, setLightboxImage] = useState("");
 
   const [quantity, setQuantity] = useState(1);
 
@@ -331,6 +335,9 @@ export default function ProductDetails() {
         };
 
         setProduct(mappedProduct);
+        setSelectedImage(`${API_BASE_URL}${data.images.thumbnail}`);
+        setHoverImage(`${API_BASE_URL}${data.images.original}`);
+
 
       } catch (err) {
         setError(err.message);
@@ -411,36 +418,53 @@ export default function ProductDetails() {
         <div className="bg-zinc-950 rounded-lg shadow-md overflow-hidden">
           <div className="md:flex">
 
-            {/* LEFT SIDE IMAGE */}
-            <div className="md:w-1/2 relative">
-              <img
-                src={product.images[0]}
-                alt={product.title}
-                className="w-full h-96 object-cover transition-transform duration-300 hover:scale-110"
-              />
+     {/* LEFT SIDE IMAGE */}
+    {/* LEFT SIDE IMAGE */}
+<div className="md:w-1/2 relative">
 
-              <button
-                onClick={handleWishlistToggle}
-                className={`absolute top-4 right-4 p-2 rounded-full ${
-                  isInWishlist(product.id)
-                    ? 'bg-red-500 text-white'
-                    : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                ♥
-              </button>
+  {/* MAIN IMAGE */}
+  <img
+    src={selectedImage}
+    alt={product.title}
+    className="w-full h-96 object-contain bg-black cursor-pointer"
+    onClick={() => {
+      setLightboxImage(hoverImage); // original-quality image
+      setIsLightboxOpen(true);
+    }}
+  />
 
-              <div className="flex gap-2 mt-4 overflow-x-auto">
-                {product.images.map((img, index) => (
-                  <img
-                    key={index}
-                    src={img}
-                    className="w-16 h-16 object-cover rounded cursor-pointer"
-                    onClick={() => handleImageChange(img)}
-                  />
-                ))}
-              </div>
-            </div>
+  {/* Wishlist Button */}
+  <button
+    onClick={handleWishlistToggle}
+    className={`absolute top-4 right-4 p-2 rounded-full ${
+      isInWishlist(product.id)
+        ? "bg-red-500 text-white"
+        : "bg-gray-200 text-gray-700"
+    }`}
+  >
+    ♥
+  </button>
+
+  {/* Thumbnails */}
+  <div className="flex gap-2 mt-4 overflow-x-auto p-2">
+    {product.images.map((img, index) => (
+      <img
+        key={index}
+        src={img}
+        className={`w-16 h-16 object-cover rounded cursor-pointer border ${
+          selectedImage === img ? "border-white border-2" : "border-transparent"
+        }`}
+        onClick={() => {
+          setSelectedImage(img);          // change displayed image
+          setHoverImage(product.images[0]); // original image for fullscreen
+        }}
+      />
+    ))}
+  </div>
+
+</div>
+
+
 
             {/* RIGHT SIDE DETAILS */}
             <div className="md:w-1/2 p-6">
@@ -448,7 +472,7 @@ export default function ProductDetails() {
 
               {/* category number shown as ID (backend only gives number) */}
               <p className="text-sm text-cyan-500 mb-2">
-                Category ID: {product.category ?? "N/A"}
+                Category : {product.category ?? "N/A"}
               </p>
 
             <p className="text-slate-300 mb-4">{product.description}</p>
@@ -511,6 +535,19 @@ export default function ProductDetails() {
         {/* SIMILAR PRODUCTS (COMMENTED) */}
         {/* <div className="mt-12"> ... </div> */}
       </div>
+      {isLightboxOpen && (
+  <div
+    className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+    onClick={() => setIsLightboxOpen(false)}
+  >
+    <img
+      src={lightboxImage}
+      className="max-h-[90%] max-w-[90%] object-contain"
+      alt="Fullscreen preview"
+    />
+  </div>
+)}
+
     </main>
   );
 }

@@ -76,10 +76,13 @@ router.post(
 // -------------------------------------------------------
 router.put(
   "/:id",
-  upload.single("image"),       // Optional new image
-  processImages,                // Process only if image is uploaded
+  upload.fields([
+    { name: "image", maxCount: 1 }
+  ]),
+  processImages,
   updateProduct
 );
+
 
 // -------------------------------------------------------
 // GET ALL PRODUCTS
