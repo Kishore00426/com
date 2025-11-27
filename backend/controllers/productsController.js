@@ -427,12 +427,13 @@ import {
   productCategories,
   productTags,
   productImages,
+  categories,
+  tags,
 } from "../db/schema.js";
 import { eq } from "drizzle-orm";
-import fs from "fs";
 
 // -------------------------------------------------------------
-// CREATE PRODUCT  (1 image → thumb, preview, original)
+// CREATE PRODUCT (now accepts 4 images → each processed)
 // -------------------------------------------------------------
 export const createProduct = async (req, res) => {
   try {
@@ -446,26 +447,14 @@ export const createProduct = async (req, res) => {
       brand,
       warrantyInfo,
       categoryIds,
-      tags,
+      tags: tagIds,
     } = req.body;
-
-    // Ensure image was processed
-    if (!req.files || !req.files.original) {
-      return res.status(400).json({
-        success: false,
-        message: "Image is required",
-      });
-    }
-
-    const originalFile = req.files.original[0].filename;
-    const thumbFile = req.files.thumbnail[0].filename;
-    const previewFile = req.files.preview[0].filename;
 
     // Parse arrays
     const categoryArray = JSON.parse(categoryIds || "[]");
-    const tagArray = JSON.parse(tags || "[]");
+    const tagArray = JSON.parse(tagIds || "[]");
 
-    // 1️ Insert product
+    // Create product
     const [newProduct] = await db
       .insert(products)
       .values({
@@ -482,34 +471,38 @@ export const createProduct = async (req, res) => {
 
     const productId = newProduct.id;
 
-    // 2️ Insert categories
+    // Insert categories
     if (categoryArray.length > 0) {
-      const categoryRows = categoryArray.map((cid) => ({
+      const rows = categoryArray.map((cid) => ({
         productId,
         categoryId: Number(cid),
       }));
-
-      await db.insert(productCategories).values(categoryRows);
+      await db.insert(productCategories).values(rows);
     }
 
-    // 3️ Insert tags
+    // Insert tags
     if (tagArray.length > 0) {
-      const tagRows = tagArray.map((tid) => ({
+      const rows = tagArray.map((tid) => ({
         productId,
         tagId: Number(tid),
       }));
-
-      await db.insert(productTags).values(tagRows);
+      await db.insert(productTags).values(rows);
     }
 
-    // 4️ Insert processed images
-    await db.insert(productImages).values({
-      productId,
-      originalUrl: `/uploads/original/${originalFile}`,
-      thumbnailUrl: `/uploads/thumb/${thumbFile}`,
-      previewUrl: `/uploads/preview/${previewFile}`,
-      position: 0,
-    });
+    // Insert all processed images (4 images × 3 versions)
+    if (req.processedImages?.length > 0) {
+      let position = 0;
+
+      for (const img of req.processedImages) {
+        await db.insert(productImages).values({
+          productId,
+          originalUrl: `/uploads/original/${img.original}`,
+          thumbnailUrl: `/uploads/thumb/${img.thumbnail}`,
+          previewUrl: `/uploads/preview/${img.preview}`,
+          position: position++,
+        });
+      }
+    }
 
     return res.json({
       success: true,
@@ -525,61 +518,38 @@ export const createProduct = async (req, res) => {
 // -------------------------------------------------------------
 // GET ALL PRODUCTS
 // -------------------------------------------------------------
-import { categories, tags } from "../db/schema.js"; // <-- import this
-
 export const getProducts = async (req, res) => {
   try {
-    const productRows = await db.select().from(products);
-
+    const rows = await db.select().from(products);
     const final = [];
 
-    for (const p of productRows) {
-      // Get category IDs
-      const categoriesRes = await db
-        .select()
-        .from(productCategories)
-        .where(eq(productCategories.productId, p.id));
+    for (const p of rows) {
+      const categoryNames =
+        await db.select({ name: categories.name })
+          .from(productCategories)
+          .leftJoin(categories, eq(productCategories.categoryId, categories.id))
+          .where(eq(productCategories.productId, p.id));
 
-      // Fetch category names
-      const categoryNames = [];
-      for (const c of categoriesRes) {
-        const [cat] = await db
-          .select()
-          .from(categories)
-          .where(eq(categories.id, c.categoryId));
-        if (cat) categoryNames.push(cat.name);
-      }
+      const tagNames =
+        await db.select({ name: tags.name })
+          .from(productTags)
+          .leftJoin(tags, eq(productTags.tagId, tags.id))
+          .where(eq(productTags.productId, p.id));
 
-      // Get tag IDs
-      const tagsRes = await db
-        .select()
-        .from(productTags)
-        .where(eq(productTags.productId, p.id));
-
-      // Fetch tag names
-      const tagNames = [];
-      for (const t of tagsRes) {
-        const [tag] = await db.select().from(tags).where(eq(tags.id, t.tagId));
-        if (tag) tagNames.push(tag.name);
-      }
-
-      const image = await db
+      const images = await db
         .select()
         .from(productImages)
-        .where(eq(productImages.productId, p.id))
-        .limit(1);
+        .where(eq(productImages.productId, p.id));
 
       final.push({
         ...p,
-        categories: categoryNames, // <-- names instead of IDs
-        tags: tagNames, // <-- names instead of IDs
-        images: image[0]
-          ? {
-              thumbnail: image[0].thumbnailUrl,
-              preview: image[0].previewUrl,
-              original: image[0].originalUrl,
-            }
-          : null,
+        categories: categoryNames.map((c) => c.name),
+        tags: tagNames.map((t) => t.name),
+        images: images.map((img) => ({
+          thumbnail: img.thumbnailUrl,
+          preview: img.previewUrl,
+          original: img.originalUrl,
+        })),
       });
     }
 
@@ -606,54 +576,34 @@ export const getProductById = async (req, res) => {
     if (!product)
       return res.status(404).json({ success: false, message: "Not found" });
 
-    // -------------------------
-    // Category names
-    // -------------------------
-    const categoriesJoined = await db
-      .select({
-        name: categories.name,
-      })
-      .from(productCategories)
-      .leftJoin(categories, eq(productCategories.categoryId, categories.id))
-      .where(eq(productCategories.productId, id));
+    const categoryNames =
+      await db.select({ name: categories.name })
+        .from(productCategories)
+        .leftJoin(categories, eq(productCategories.categoryId, categories.id))
+        .where(eq(productCategories.productId, id));
 
-    const categoryNames = categoriesJoined.map((x) => x.name);
+    const tagNames =
+      await db.select({ name: tags.name })
+        .from(productTags)
+        .leftJoin(tags, eq(productTags.tagId, tags.id))
+        .where(eq(productTags.productId, id));
 
-    // -------------------------
-    // Tag names
-    // -------------------------
-    const tagsJoined = await db
-      .select({
-        name: tags.name,
-      })
-      .from(productTags)
-      .leftJoin(tags, eq(productTags.tagId, tags.id))
-      .where(eq(productTags.productId, id));
-
-    const tagNames = tagsJoined.map((x) => x.name);
-
-    // -------------------------
-    // Images
-    // -------------------------
-    const [image] = await db
+    const images = await db
       .select()
       .from(productImages)
-      .where(eq(productImages.productId, id))
-      .limit(1);
+      .where(eq(productImages.productId, id));
 
     return res.json({
       success: true,
       data: {
         ...product,
-        categories: categoryNames,
-        tags: tagNames,
-        images: image
-          ? {
-              thumbnail: image.thumbnailUrl,
-              preview: image.previewUrl,
-              original: image.originalUrl,
-            }
-          : null,
+        categories: categoryNames.map((c) => c.name),
+        tags: tagNames.map((t) => t.name),
+        images: images.map((img) => ({
+          thumbnail: img.thumbnailUrl,
+          preview: img.previewUrl,
+          original: img.originalUrl,
+        })),
       },
     });
   } catch (error) {
@@ -663,30 +613,19 @@ export const getProductById = async (req, res) => {
 };
 
 // -------------------------------------------------------------
-// UPDATE PRODUCT (with category, tags & image replace)
+// UPDATE PRODUCT (also update categories/tags)
 // -------------------------------------------------------------
 export const updateProduct = async (req, res) => {
   try {
     const id = Number(req.params.id);
     const body = req.body;
 
-    const categoryArray = body.categoryIds
-      ? JSON.parse(body.categoryIds)
-      : null;
+    const categoryArray = body.categoryIds ? JSON.parse(body.categoryIds) : null;
     const tagArray = body.tags ? JSON.parse(body.tags) : null;
 
-    // 1️ UPDATE PRODUCT DATA
     const updateData = { ...body };
     delete updateData.categoryIds;
     delete updateData.tags;
-
-    // Prevent empty update 
-    if (Object.keys(updateData).length === 0 && !req.files) {
-      return res.status(400).json({
-        success: false,
-        message: "No fields provided to update",
-      });
-    }
 
     const [updated] = await db
       .update(products)
@@ -695,57 +634,41 @@ export const updateProduct = async (req, res) => {
       .returning();
 
     if (!updated)
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+      return res.status(404).json({ success: false, message: "Product not found" });
 
-    // 2 UPDATE CATEGORIES
+    // Update categories
     if (categoryArray) {
-      await db
-        .delete(productCategories)
-        .where(eq(productCategories.productId, id));
-      const rows = categoryArray.map((c) => ({
-        productId: id,
-        categoryId: Number(c),
-      }));
-      await db.insert(productCategories).values(rows);
+      await db.delete(productCategories).where(eq(productCategories.productId, id));
+      await db.insert(productCategories).values(
+        categoryArray.map((c) => ({ productId: id, categoryId: Number(c) }))
+      );
     }
 
-    // 3️ UPDATE TAGS
+    // Update tags
     if (tagArray) {
       await db.delete(productTags).where(eq(productTags.productId, id));
-      const rows = tagArray.map((t) => ({
-        productId: id,
-        tagId: Number(t),
-      }));
-      await db.insert(productTags).values(rows);
+      await db.insert(productTags).values(
+        tagArray.map((t) => ({ productId: id, tagId: Number(t) }))
+      );
     }
-// 🔥 prevent server error when no processed images exist
-if (!req.processedImages) {
-  console.log("No processedImages found");
-}
 
+    // Update images (if new ones provided)
+    if (req.processedImages?.length > 0) {
+      await db.delete(productImages).where(eq(productImages.productId, id));
 
- // 4️ UPDATE IMAGE ONLY IF NEW ONE EXISTS
-if (req.processedImages) {
-  const { original, thumbnail, preview } = req.processedImages;
+      let position = 0;
+      for (const img of req.processedImages) {
+        await db.insert(productImages).values({
+          productId: id,
+          originalUrl: `/uploads/original/${img.original}`,
+          thumbnailUrl: `/uploads/thumb/${img.thumbnail}`,
+          previewUrl: `/uploads/preview/${img.preview}`,
+          position: position++,
+        });
+      }
+    }
 
-  await db
-    .update(productImages)
-    .set({
-      originalUrl: `/uploads/original/${original}`,
-      thumbnailUrl: `/uploads/thumb/${thumbnail}`,
-      previewUrl: `/uploads/preview/${preview}`,
-    })
-    .where(eq(productImages.productId, id));
-}
-
-
-    return res.json({
-      success: true,
-      message: "Product updated",
-      data: updated,
-    });
+    return res.json({ success: true, message: "Product updated", data: updated });
   } catch (error) {
     console.error("Update Product Error:", error);
     return res.status(500).json({ success: false });
@@ -753,18 +676,18 @@ if (req.processedImages) {
 };
 
 // -------------------------------------------------------------
-// DELETE PRODUCT  (cascade removes categories/tags/images)
+// DELETE PRODUCT
 // -------------------------------------------------------------
 export const deleteProduct = async (req, res) => {
   try {
     const id = Number(req.params.id);
 
+    await db.delete(productImages).where(eq(productImages.productId, id));
+    await db.delete(productCategories).where(eq(productCategories.productId, id));
+    await db.delete(productTags).where(eq(productTags.productId, id));
     await db.delete(products).where(eq(products.id, id));
 
-    return res.json({
-      success: true,
-      message: "Product deleted",
-    });
+    return res.json({ success: true, message: "Product deleted" });
   } catch (error) {
     console.error("Delete Product Error:", error);
     return res.status(500).json({ success: false });

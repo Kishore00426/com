@@ -1,79 +1,133 @@
 import multer from "multer";
-import path from "path";
 import sharp from "sharp";
 import fs from "fs";
+import path from "path";
 
-// ------------------------------------------------------------
-// Ensure upload folders exist
-// ------------------------------------------------------------
-const folders = ["uploads/original", "uploads/thumb", "uploads/preview"];
-folders.forEach((dir) => {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-});
+// ensure folders exist
+const ensureDirs = () => {
+  const folders = [
+    path.join(process.cwd(), "uploads"),
+    path.join(process.cwd(), "uploads", "temp"),
+    path.join(process.cwd(), "uploads", "original"),
+    path.join(process.cwd(), "uploads", "preview"),
+    path.join(process.cwd(), "uploads", "thumb"),
+  ];
+  for (const f of folders) {
+    if (!fs.existsSync(f)) fs.mkdirSync(f, { recursive: true });
+  }
+};
+ensureDirs();
 
-// ------------------------------------------------------------
-// Multer storage (temp upload)
-// ------------------------------------------------------------
+// multer storage (keeps extension!)
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/original/");
+  destination: (req, file, cb) => {
+    cb(null, path.join(process.cwd(), "uploads", "temp"));
   },
-  filename: function (req, file, cb) {
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
+    cb(null, `${unique}${ext}`);
   },
 });
 
-// ------------------------------------------------------------
-// File filter
-// ------------------------------------------------------------
+// only allow common image types
+const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
+
 const fileFilter = (req, file, cb) => {
-  const allowed = ["image/jpeg", "image/png", "image/webp"];
-  if (allowed.includes(file.mimetype)) cb(null, true);
-  else cb(new Error("Only JPG, PNG, WEBP allowed"), false);
+  if (!ALLOWED.has(file.mimetype)) {
+    return cb(new Error("Only JPEG, PNG and WEBP images are allowed"));
+  }
+  cb(null, true);
 };
 
-// ------------------------------------------------------------
-// Multer init
-// ------------------------------------------------------------
-export const upload = multer({ storage, fileFilter });
+// export multer middleware accepting 4 named files
+export const upload = multer({ storage, fileFilter }).fields([
+  { name: "image1", maxCount: 1 },
+  { name: "image2", maxCount: 1 },
+  { name: "image3", maxCount: 1 },
+  { name: "image4", maxCount: 1 },
+]);
 
-// ------------------------------------------------------------
-// Sharp — create thumb, preview, original
-// ------------------------------------------------------------
+// PROCESS IMAGES: create thumb (150), preview (500), original (converted to jpg)
+// returns nothing, but sets req.processedImages = [{ original, preview, thumbnail }, ...]
 export const processImages = async (req, res, next) => {
-  if (!req.file) return next();
-
-  const inputPath = req.file.path;
-  const ext = path.extname(req.file.filename);
-  const base = req.file.filename.replace(ext, "");
-
-  // Final filenames
-  const thumbFile = `${base}${ext}`;
-  const previewFile = `${base}${ext}`;
-  const originalFile = `${base}${ext}`;
-
-  const thumbPath = `uploads/thumb/${thumbFile}`;
-  const previewPath = `uploads/preview/${previewFile}`;
-  const originalPath = `uploads/original/${originalFile}`;
-
   try {
-    await sharp(inputPath).resize(200).toFile(thumbPath);
-    await sharp(inputPath).resize(600).toFile(previewPath);
-    fs.copyFileSync(inputPath, originalPath);
+    // if no files, just continue
+    if (!req.files || Object.keys(req.files).length === 0) {
+      req.processedImages = [];
+      return next();
+    }
 
-    req.files = {
-      thumbnail: [{ filename: thumbFile }],
-      preview: [{ filename: previewFile }],
-      original: [{ filename: originalFile }],
-    };
+    ensureDirs(); // ensure again, in case
 
-    next();
+    const fields = ["image1", "image2", "image3", "image4"];
+    req.processedImages = [];
+
+    for (const field of fields) {
+      const filesForField = req.files[field];
+      if (!filesForField || filesForField.length === 0) continue;
+
+      // support only first file per field (you used maxCount:1)
+      const file = filesForField[0];
+      const tempPath = file.path;
+
+      // double-check file exists
+      if (!fs.existsSync(tempPath)) {
+        console.warn("Temp file missing:", tempPath);
+        continue;
+      }
+
+      // create unique base name for outputs
+      const baseName = Date.now() + "-" + Math.round(Math.random() * 1e9);
+
+      // output filenames (jpg) — consistent for all formats (easier for frontend)
+      const originalName = `${baseName}-original.jpg`;
+      const previewName = `${baseName}-preview.jpg`;
+      const thumbName = `${baseName}-thumb.jpg`;
+
+      const originalPath = path.join(process.cwd(), "uploads", "original", originalName);
+      const previewPath = path.join(process.cwd(), "uploads", "preview", previewName);
+      const thumbPath = path.join(process.cwd(), "uploads", "thumb", thumbName);
+
+      // Use sharp to read the temp file and write the outputs.
+      // We convert outputs to JPEG to avoid format inconsistencies.
+      // Process sequentially to avoid Windows file-lock issues.
+      await sharp(tempPath)
+        .jpeg({ quality: 90 })
+        .toFile(originalPath);
+
+      // preview  (500px width, auto height)
+      await sharp(tempPath)
+        .resize({ width: 500, withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toFile(previewPath);
+
+      // thumb (150px)
+      await sharp(tempPath)
+        .resize({ width: 150, withoutEnlargement: true })
+        .jpeg({ quality: 70 })
+        .toFile(thumbPath);
+
+      // delete the multer temporary file only AFTER successful processing
+      try {
+        fs.unlinkSync(tempPath);
+      } catch (unlinkErr) {
+        // not fatal, but log it
+        console.warn("Could not delete temp file:", tempPath, unlinkErr?.message || unlinkErr);
+      }
+
+      // push just the filenames (controller expects filenames in previous code)
+      req.processedImages.push({
+        original: originalName,
+        preview: previewName,
+        thumbnail: thumbName,
+      });
+    }
+
+    return next();
   } catch (err) {
-    console.error("Sharp processing error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Image processing failed",
-    });
+    console.error("Image Processing Error:", err);
+    // make error message clearer for client
+    return res.status(400).json({ success: false, message: "Image processing failed: " + (err.message || err) });
   }
 };

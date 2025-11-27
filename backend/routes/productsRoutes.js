@@ -54,49 +54,24 @@ import {
   getProducts,
   getProductById,
   updateProduct,
-  deleteProduct
+  deleteProduct,
 } from "../controllers/productsController.js";
 
 const router = express.Router();
 
-// -------------------------------------------------------
-// CREATE PRODUCT (Single Image)
-// -------------------------------------------------------
-router.post(
-  "/",
-  upload.single("image"),      // Accept 1 image
-  processImages,                // Create original, thumb, preview
-  createProduct                 // Save product + image path in DB
-);
+// CREATE PRODUCT
+router.post("/", upload, processImages, createProduct);
 
-// -------------------------------------------------------
 // UPDATE PRODUCT
-// ✔ Can update name, category, price, etc.
-// ✔ Can update image if provided
-// -------------------------------------------------------
-router.put(
-  "/:id",
-  upload.fields([
-    { name: "image", maxCount: 1 }
-  ]),
-  processImages,
-  updateProduct
-);
+router.put("/:id", upload, processImages, updateProduct);
 
-
-// -------------------------------------------------------
-// GET ALL PRODUCTS
-// -------------------------------------------------------
+// GET ALL
 router.get("/", getProducts);
 
-// -------------------------------------------------------
-// GET SINGLE PRODUCT
-// -------------------------------------------------------
+// GET ONE
 router.get("/:id", getProductById);
 
-// -------------------------------------------------------
-// DELETE PRODUCT
-// -------------------------------------------------------
+// DELETE
 router.delete("/:id", deleteProduct);
 
 export default router;
