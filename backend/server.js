@@ -5,7 +5,7 @@ import path from "path";
 import tagRoutes from "./routes/tagRoutes.js";
 import productsRoutes from "./routes/productsRoutes.js";
 import categoriesRoutes from "./routes/categoriesRoutes.js";
-// import wishlistRoutes from "./routes/wishlistRoutes.js";
+ import wishlistRoutes from "./routes/wishlistRoutes.js";
 // import cartRoutes from "./routes/cartRoutes.js";
 // import ordersRoutes from "./routes/ordersRoutes.js";
 
@@ -25,7 +25,7 @@ app.get("/", (req, res) => res.send("✅ E-com Backend Running"));
 app.use("/api/products", productsRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/tags", tagRoutes);
-// app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 // app.use("/api/cart", cartRoutes);
 // app.use("/api/orders", ordersRoutes);
 

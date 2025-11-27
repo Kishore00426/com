@@ -97,14 +97,23 @@ export const productImages = pgTable("product_images", {
 
 
 
-//
-// WISHLIST TABLE
-//
+// =========================
+//  WISHLIST TABLE
+// =========================
+
+// import { users } from "./usersSchema"; // for later when you add users
+
 export const wishlist = pgTable("wishlist", {
   id: serial("id").primaryKey(),
+
+  // FUTURE-PROOF: allow null for now, add real user later pupose
+  userId: integer("user_id").default(null),
+
   productId: integer("product_id")
-    .references(() => products.id)
-    .notNull(),
+    .notNull()
+    .references(() => products.id),
+
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 //
