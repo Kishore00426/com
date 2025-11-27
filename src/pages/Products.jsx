@@ -398,55 +398,56 @@ export default function Products() {
         />
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="bg-neutral-900 rounded-lg shadow-md overflow-hidden transition-shadow duration-300 relative"
-            >
-              <img
-                src={`http://localhost:5000${product.images?.thumbnail}`}
-                alt={product.title}
-                className="w-full h-48 object-contain"
-              />
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {filteredProducts.map((product) => (
+    <div
+      key={product.id}
+      className="bg-neutral-900 rounded-lg shadow-md overflow-hidden transition-shadow duration-300 relative"
+    >
+      <img
+        src={`http://localhost:5000${product.images[0]?.thumbnail}`}
+        alt={product.title}
+        className="w-full h-48 object-contain"
+      />
 
-              {/* Wishlist Button */}
-              <button
-                onClick={() => handleWishlistToggle(product)}
-                className={`absolute top-2 right-2 p-2 rounded-full transition-colors duration-200 ${
-                  isInWishlist(product.id)
-                    ? 'bg-red-500 text-white hover:bg-red-600'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                ❤️
-              </button>
+      {/* Wishlist Button */}
+      <button
+        onClick={() => handleWishlistToggle(product)}
+        className={`absolute top-2 right-2 p-2 rounded-full transition-colors duration-200 ${
+          isInWishlist(product.id)
+            ? 'bg-red-500 text-white hover:bg-red-600'
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        }`}
+      >
+        ❤️
+      </button>
 
-              <div className="p-6">
-                <Link
-                  to={`/products/${product.id}`}
-                  className="text-xl font-semibold hover:text-slate-600 transition-colors block mb-2 truncate"
-                >
-                  {product.title}
-                </Link>
+      <div className="p-6">
+        <Link
+          to={`/products/${product.id}`}
+          className="text-xl font-semibold hover:text-slate-600 transition-colors block mb-2 truncate"
+        >
+          {product.title}
+        </Link>
 
-                <p className="text-sm text-cyan-500 mb-2">
-                  Category: {product.categories?.join(", ")}
-                </p>
+        <p className="text-sm text-cyan-500 mb-2">
+          Category: {product.categories?.join(", ")}
+        </p>
 
-                <p className="text-slate-300 text-sm mb-2 line-clamp-2">
-                  {product.description}
-                </p>
+        <p className="text-slate-300 text-sm mb-2 line-clamp-2">
+          {product.description}
+        </p>
 
-                <p className="text-2xl font-bold text-teal-200 mb-4">
-                  ₹{Number(product.price).toFixed(2)}
-                </p>
+        <p className="text-2xl font-bold text-teal-200 mb-4">
+          ₹{Number(product.price).toFixed(2)}
+        </p>
 
-                <AddToCartButton product={product} quantity={quantities[product.id] || 1} />
-              </div>
-            </div>
-          ))}
-        </div>
+        <AddToCartButton product={product} quantity={quantities[product.id] || 1} />
+      </div>
+    </div>
+  ))}
+</div>
+
 
         {filteredProducts.length === 0 && (
           <div className="text-center py-12">

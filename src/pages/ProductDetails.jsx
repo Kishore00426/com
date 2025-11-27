@@ -274,7 +274,6 @@
 //     </main>
 //   );
 // }
- 
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -291,10 +290,8 @@ export default function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedImage, setSelectedImage] = useState("");
-  const [hoverImage, setHoverImage] = useState("");
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-const [lightboxImage, setLightboxImage] = useState("");
 
   const [quantity, setQuantity] = useState(1);
 
@@ -305,39 +302,22 @@ const [lightboxImage, setLightboxImage] = useState("");
     const fetchProduct = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/products/${id}`);
-
         if (!response.ok) throw new Error('Failed to fetch product details');
 
         const json = await response.json();
         const data = json.data;
 
-        // Map backend fields to frontend structure
-        const mappedProduct = {
-          id: data.id,
-          title: data.title,
-          description: data.description,
-          price: Number(data.price),
-          discountPercentage: Number(data.discount),
-          stock: data.stock,
-          brand: data.brand,
-          warrantyInformation: data.warrantyInfo,
+        // Map backend images to full URLs
+        const images = data.images.map(img => ({
+          original: `${API_BASE_URL}${img.original}`,
+          preview: `${API_BASE_URL}${img.preview}`,
+          thumbnail: `${API_BASE_URL}${img.thumbnail}`,
+        }));
 
-          // Backend sends categories as [11], so use number directly
-          category: data.categories?.[0] || null,
-
-          availabilityStatus: data.availableStock > 0 ? "In Stock" : "Out of Stock",
-
-          images: [
-            `${API_BASE_URL}${data.images.original}`,
-            `${API_BASE_URL}${data.images.preview}`,
-            `${API_BASE_URL}${data.images.thumbnail}`
-          ]
-        };
-
-        setProduct(mappedProduct);
-        setSelectedImage(`${API_BASE_URL}${data.images.thumbnail}`);
-        setHoverImage(`${API_BASE_URL}${data.images.original}`);
-
+        setProduct({
+          ...data,
+          images
+        });
 
       } catch (err) {
         setError(err.message);
@@ -366,13 +346,6 @@ const [lightboxImage, setLightboxImage] = useState("");
       dispatch(addToWishlist(product));
       toast.success(`${product.title} added to wishlist!`);
     }
-  };
-
-  const handleImageChange = (newImage) => {
-    setProduct(prev => ({
-      ...prev,
-      images: [newImage, ...prev.images.filter(img => img !== newImage)]
-    }));
   };
 
   if (loading) {
@@ -408,6 +381,8 @@ const [lightboxImage, setLightboxImage] = useState("");
     );
   }
 
+  const selectedImage = product.images[selectedImageIndex];
+
   return (
     <main className="flex-grow p-6">
       <div className="max-w-4xl mx-auto">
@@ -418,103 +393,86 @@ const [lightboxImage, setLightboxImage] = useState("");
         <div className="bg-zinc-950 rounded-lg shadow-md overflow-hidden">
           <div className="md:flex">
 
-     {/* LEFT SIDE IMAGE */}
-    {/* LEFT SIDE IMAGE */}
-<div className="md:w-1/2 relative">
+            {/* LEFT SIDE IMAGE */}
+            <div className="md:w-1/2 relative">
+              {/* MAIN IMAGE */}
+              <img
+                src={selectedImage.original}
+                alt={product.title}
+                className="w-full h-96 object-contain bg-black cursor-pointer"
+                onClick={() => setIsLightboxOpen(true)}
+              />
 
-  {/* MAIN IMAGE */}
-  <img
-    src={selectedImage}
-    alt={product.title}
-    className="w-full h-96 object-contain bg-black cursor-pointer"
-    onClick={() => {
-      setLightboxImage(hoverImage); // original-quality image
-      setIsLightboxOpen(true);
-    }}
-  />
+              {/* Wishlist Button */}
+              <button
+                onClick={handleWishlistToggle}
+                className={`absolute top-4 right-4 p-2 rounded-full ${
+                  isInWishlist(product.id)
+                    ? "bg-red-500 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                ♥
+              </button>
 
-  {/* Wishlist Button */}
-  <button
-    onClick={handleWishlistToggle}
-    className={`absolute top-4 right-4 p-2 rounded-full ${
-      isInWishlist(product.id)
-        ? "bg-red-500 text-white"
-        : "bg-gray-200 text-gray-700"
-    }`}
-  >
-    ♥
-  </button>
-
-  {/* Thumbnails */}
-  <div className="flex gap-2 mt-4 overflow-x-auto p-2">
-    {product.images.map((img, index) => (
-      <img
-        key={index}
-        src={img}
-        className={`w-16 h-16 object-cover rounded cursor-pointer border ${
-          selectedImage === img ? "border-white border-2" : "border-transparent"
-        }`}
-        onClick={() => {
-          setSelectedImage(img);          // change displayed image
-          setHoverImage(product.images[0]); // original image for fullscreen
-        }}
-      />
-    ))}
-  </div>
-
-</div>
-
-
+              {/* Thumbnails */}
+              <div className="flex gap-2 mt-4 overflow-x-auto p-2">
+                {product.images.map((img, index) => (
+                  <img
+                    key={index}
+                    src={img.thumbnail}
+                    className={`w-16 h-16 object-cover rounded cursor-pointer border ${
+                      selectedImageIndex === index ? "border-white border-2" : "border-transparent"
+                    }`}
+                    onClick={() => setSelectedImageIndex(index)}
+                  />
+                ))}
+              </div>
+            </div>
 
             {/* RIGHT SIDE DETAILS */}
             <div className="md:w-1/2 p-6">
               <h1 className="text-3xl font-bold mb-4">{product.title}</h1>
 
-              {/* category number shown as ID (backend only gives number) */}
               <p className="text-sm text-cyan-500 mb-2">
-                Category : {product.category ?? "N/A"}
+                Category : {product.categories?.join(", ") ?? "N/A"}
               </p>
 
-            <p className="text-slate-300 mb-4">{product.description}</p>
+              <p className="text-slate-300 mb-4">{product.description}</p>
 
-{/* PRICE & DISCOUNT */}
-<div className="mb-4">
-  <p className="text-2xl font-bold text-teal-200">
-    ₹{product.price.toFixed(2)}
-  </p>
+              <div className="mb-4">
+                <p className="text-2xl font-bold text-teal-200">
+                  ₹{Number(product.price).toFixed(2)}
+                </p>
 
-  {product.discountPercentage > 0 && (
-    <p className="text-yellow-400 text-sm">
-      Discount: {product.discountPercentage}%
-    </p>
-  )}
-</div>
+                {product.discount > 0 && (
+                  <p className="text-yellow-400 text-sm">
+                    Discount: {Number(product.discount)}%
+                  </p>
+                )}
+              </div>
 
-{/* brand */}
-<p className="text-sky-400 font-semibold mb-2">
-  Brand: {product.brand}
-</p>
+              <p className="text-sky-400 font-semibold mb-2">
+                Brand: {product.brand}
+              </p>
 
-{/* STOCK */}
-<p className="text-green-400 mb-2">
-  {product.availabilityStatus}
-</p>
-<p className="text-sm text-gray-300 mb-4">
-  Available Stock: {product.stock}
-</p>
+              <p className="text-green-400 mb-2">
+                {product.availableStock > 0 ? "In Stock" : "Out of Stock"}
+              </p>
+              <p className="text-sm text-gray-300 mb-4">
+                Available Stock: {product.availableStock}
+              </p>
 
-{/* warranty */}
-<div className="font-semibold text-emerald-400 mb-4">
-  Warranty: {product.warrantyInformation}
-</div>
-
+              <div className="font-semibold text-emerald-400 mb-4">
+                Warranty: {product.warrantyInfo}
+              </div>
 
               <div className="flex items-center justify-between mb-4">
                 <label>Quantity:</label>
                 <input
                   type="number"
                   min="1"
-                  max={product.stock}
+                  max={product.availableStock}
                   value={quantity}
                   onChange={(e) => handleQuantityChange(e.target.value)}
                   className="w-16 px-2 py-1 border rounded"
@@ -532,22 +490,20 @@ const [lightboxImage, setLightboxImage] = useState("");
           </div>
         </div>
 
-        {/* SIMILAR PRODUCTS (COMMENTED) */}
-        {/* <div className="mt-12"> ... </div> */}
-      </div>
-      {isLightboxOpen && (
-  <div
-    className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
-    onClick={() => setIsLightboxOpen(false)}
-  >
-    <img
-      src={lightboxImage}
-      className="max-h-[90%] max-w-[90%] object-contain"
-      alt="Fullscreen preview"
-    />
-  </div>
-)}
+        {isLightboxOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+            onClick={() => setIsLightboxOpen(false)}
+          >
+            <img
+              src={selectedImage.original}
+              className="max-h-[90%] max-w-[90%] object-contain"
+              alt="Fullscreen preview"
+            />
+          </div>
+        )}
 
+      </div>
     </main>
   );
 }
