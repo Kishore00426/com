@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { selectCartItems, selectDiscountedTotal, clearCart } from '../redux/cartSlice';
+// import { selectCartItems, selectDiscountedTotal, clearCart } from '../redux/cartSlice';
+import { selectCartItems, selectTotalPrice, clearCart } from '../redux/cartSlice';
 
 export default function Checkout() {
   const cartItems = useSelector(selectCartItems);
-  const subtotal = useSelector(selectDiscountedTotal);
+  // const subtotal = useSelector(selectDiscountedTotal);/
+  const subtotal = useSelector(selectTotalPrice);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState('card');

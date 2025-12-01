@@ -1,27 +1,23 @@
+// backend/routes/cartRoutes.js
 import express from "express";
 import {
-  getCart,
+  getCartItems,
   addToCart,
-  updateQuantity,
-  removeFromCart,
-  clearCart,
+  updateCartItem,
+  removeCartItem,
+  clearCart
 } from "../controllers/cartController.js";
+import { requireAuth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// Get all cart items
-router.get("/", getCart);
+// All routes require login
+router.use(requireAuth);
 
-// Add to cart
+router.get("/", getCartItems);
 router.post("/add", addToCart);
-
-// Update quantity
-router.put("/update/:id", updateQuantity);
-
-// Remove item
-router.delete("/remove/:id", removeFromCart);
-
-// Clear cart
+router.put("/update", updateCartItem);
+router.delete("/remove/:cartId", removeCartItem);
 router.delete("/clear", clearCart);
 
 export default router;

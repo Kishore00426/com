@@ -1,90 +1,167 @@
-import { createSlice } from '@reduxjs/toolkit';
+// src/redux/cartSlice.js
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+import API_BASE_URL from "../config/api";
 
-// Helper function to load cart from localStorage
-const loadCartFromStorage = () => {
-  try {
-    const savedCart = localStorage.getItem('cartItems');
-    return savedCart ? JSON.parse(savedCart) : [];
-  } catch (error) {
-    console.error('Error loading cart from localStorage:', error);
-    return [];
+// =======================================================
+// GET CART ITEMS
+// =======================================================
+export const fetchCart = createAsyncThunk(
+  "cart/fetchCart",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/cart`, {
+        withCredentials: true,
+      });
+      return res.data.cart; // backend returns cart array
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
   }
-};
+);
 
-// Helper function to save cart to localStorage
-const saveCartToStorage = (cartItems) => {
-  try {
-    localStorage.setItem('cartItems', JSON.stringify(cartItems));
-  } catch (error) {
-    console.error('Error saving cart to localStorage:', error);
+// =======================================================
+// ADD TO CART (backend)
+// =======================================================
+export const addToCart = createAsyncThunk(
+  "cart/addToCart",
+  async ({ productId, quantity = 1 }, { rejectWithValue, dispatch }) => {
+    try {
+      await axios.post(
+        `${API_BASE_URL}/api/cart/add`,
+        { productId, quantity },
+        { withCredentials: true }
+      );
+
+      // After adding — refresh cart
+      dispatch(fetchCart());
+      return { productId, quantity };
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
   }
-};
+);
 
+// =======================================================
+// UPDATE QUANTITY
+// =======================================================
+export const updateCart = createAsyncThunk(
+  "cart/updateCart",
+  async ({ cartId, quantity }, { rejectWithValue }) => {
+    try {
+      await axios.put(
+        `${API_BASE_URL}/api/cart/update`,
+        { cartId, quantity },
+        { withCredentials: true }
+      );
+      return { cartId, quantity };
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+// =======================================================
+// REMOVE ITEM
+// =======================================================
+export const removeCart = createAsyncThunk(
+  "cart/removeCart",
+  async (cartId, { rejectWithValue }) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/api/cart/remove/${cartId}`, {
+        withCredentials: true,
+      });
+      return cartId;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+// =======================================================
+// CLEAR CART
+// =======================================================
+export const clearCart = createAsyncThunk(
+  "cart/clearCart",
+  async (_, { rejectWithValue }) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/api/cart/clear`, {
+        withCredentials: true,
+      });
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+// =======================================================
+// SLICE
+// =======================================================
 const cartSlice = createSlice({
-  name: 'cart',
+  name: "cart",
   initialState: {
-    items: loadCartFromStorage(),
-    discountPercentage: 0,
+    items: [], // backend cart items
+    loading: false,
+    error: null,
   },
-  reducers: {
-    addToCart: (state, action) => {
-      const { product, quantity = 1 } = action.payload;
-      const existingItem = state.items.find(item => item.id === product.id);
-      if (existingItem) {
-        existingItem.quantity += quantity;
-      } else {
-        state.items.push({ ...product, quantity });
-      }
-      saveCartToStorage(state.items);
-    },
-    removeFromCart: (state, action) => {
-      state.items = state.items.filter(item => item.id !== action.payload);
-      saveCartToStorage(state.items);
-    },
-    updateQuantity: (state, action) => {
-      const { id, quantity } = action.payload;
-      if (quantity <= 0) {
-        state.items = state.items.filter(item => item.id !== id);
-      } else {
-        const item = state.items.find(item => item.id === id);
-        if (item) {
-          item.quantity = quantity;
-        }
-      }
-      saveCartToStorage(state.items);
-    },
-    clearCart: (state) => {
-      state.items = [];
-      state.discountPercentage = 0;
-      saveCartToStorage(state.items);
-    },
-    applyDiscount: (state, action) => {
-      const code = action.payload;
-      if (code === 'DISCOUNT10') {
-        state.discountPercentage = 10;
-      } else {
-        state.discountPercentage = 0;
-      }
-    },
-    removeDiscount: (state) => {
-      state.discountPercentage = 0;
-    },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      // FETCH CART
+      .addCase(fetchCart.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload;
+      })
+      .addCase(fetchCart.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ADD TO CART
+      .addCase(addToCart.fulfilled, () => {})
+
+      // UPDATE QUANTITY
+      .addCase(updateCart.fulfilled, (state, action) => {
+        const { cartId, quantity } = action.payload;
+        const item = state.items.find((i) => i.cartId === cartId);
+        if (item) item.quantity = quantity;
+      })
+
+      // REMOVE ITEM
+      .addCase(removeCart.fulfilled, (state, action) => {
+        state.items = state.items.filter((i) => i.cartId !== action.payload);
+      })
+
+      // CLEAR CART
+      .addCase(clearCart.fulfilled, (state) => {
+        state.items = [];
+      });
   },
 });
 
-export const { addToCart, removeFromCart, updateQuantity, clearCart, applyDiscount, removeDiscount } = cartSlice.actions;
+// ===================================================================
+// SELECTORS (IMPORTANT!)
+// ===================================================================
 
-// Selectors
+// All cart items
 export const selectCartItems = (state) => state.cart.items;
-export const selectTotalPrice = (state) =>
-  state.cart.items.reduce((total, item) => total + item.price * item.quantity, 0);
+
+// Count of items in cart (sum of quantities)
 export const selectTotalItems = (state) =>
   state.cart.items.reduce((total, item) => total + item.quantity, 0);
-export const selectDiscountPercentage = (state) => state.cart.discountPercentage;
-export const selectDiscountedTotal = (state) => {
-  const subtotal = selectTotalPrice(state);
-  const discount = subtotal * (state.cart.discountPercentage / 100);
-  return subtotal - discount;
-};
+
+// Just the number of products in cart (not quantity)
+export const selectCartCount = (state) => state.cart.items.length;
+
+// Total price
+export const selectTotalPrice = (state) =>
+  state.cart.items.reduce(
+    (total, item) => total + Number(item.price) * item.quantity,
+    0
+  );
 
 export default cartSlice.reducer;

@@ -5,8 +5,28 @@ import {
   text,
   integer,
   timestamp,
-  decimal
+  decimal,
+  json
 } from "drizzle-orm/pg-core";
+
+// =========================
+// USERS TABLE
+// =========================
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  address: text("address"),
+  city: varchar("city", { length: 100 }),
+  zip_code: varchar("zip_code", { length: 20 }),
+  role: varchar("role", { length: 50 }).default("user"), // default role
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+
 
 // ------------------------
 //  CATEGORIES TABLE
@@ -106,8 +126,9 @@ export const productImages = pgTable("product_images", {
 export const wishlist = pgTable("wishlist", {
   id: serial("id").primaryKey(),
 
-  // FUTURE-PROOF: allow null for now, add real user later pupose
-  userId: integer("user_id").default(null),
+ userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
 
   productId: integer("product_id")
     .notNull()
@@ -116,56 +137,67 @@ export const wishlist = pgTable("wishlist", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-//
-// CART TABLE
-//
+
+// =========================
+// CART TABLE (linked to users)
+// =========================
 export const cart = pgTable("cart", {
   id: serial("id").primaryKey(),
+
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
   productId: integer("product_id")
-    .references(() => products.id)
-    .notNull(),
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+
   quantity: integer("quantity").default(1),
+
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-//
-// ORDERS TABLE
-//
+// =========================
+// ORDERS TABLE (linked to users)
+// =========================
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
 
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
+  shipping: decimal("shipping", { precision: 10, scale: 2 }).notNull(),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
-  status: text("status").default("pending"),
+
+  paymentMethod: varchar("payment_method", { length: 50 }).notNull(), // card/paypal/upi/cod
+  status: varchar("status", { length: 50 }).default("pending"), // pending, completed, cancelled
+
+  shippingInfo: json("shipping_info").notNull(), // name, email, address, city, zip
 
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-//
+// =========================
 // ORDER ITEMS TABLE
-//
+// =========================
 export const orderItems = pgTable("order_items", {
   id: serial("id").primaryKey(),
 
   orderId: integer("order_id")
-    .references(() => orders.id)
-    .notNull(),
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
 
   productId: integer("product_id")
-    .references(() => products.id)
-    .notNull(),
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
 
+  title: varchar("title", { length: 255 }).notNull(), // save product name at order time
   quantity: integer("quantity").notNull(),
-
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }).default(0),
 });
-
-//
-// CONTACT MESSAGES TABLE
-//
-export const contacts = pgTable("contacts", {
-  id: serial("id").primaryKey(),
-  name: text("name"),
-  email: text("email"),
-  message: text("message"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
