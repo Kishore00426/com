@@ -275,11 +275,11 @@
 //   );
 // }
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../redux/cartSlice';
-import { addToWishlist, removeFromWishlist, selectWishlistItems } from '../redux/wishlistSlice';
+import { addToWishlistAsync, removeFromWishlistAsync, selectWishlistItems } from '../redux/wishlistSlice';
 import Loader from '../components/Loader';
 import API_BASE_URL from "../config/api";
 
@@ -296,7 +296,8 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
 
   const wishlistItems = useSelector(selectWishlistItems);
-  const isInWishlist = (id) => wishlistItems.some(item => item.id === id);
+  const user = useSelector((state) => state.auth.user);
+  const isInWishlist = (id) => wishlistItems.some(item => item.productId === id);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -334,16 +335,27 @@ export default function ProductDetails() {
   };
 
   const handleAddToCart = () => {
-    dispatch(addToCart({ product, quantity }));
+    if (!user) {
+      toast.error("Please login to add items to cart");
+      return;
+    }
+    dispatch(addToCart({ productId: product.id, quantity }));
     toast.success(`Added ${quantity} x ${product.title} to cart!`);
   };
 
   const handleWishlistToggle = () => {
-    if (isInWishlist(product.id)) {
-      dispatch(removeFromWishlist(product.id));
+    if (!user) {
+      toast.error("Please login to manage your wishlist");
+      return;
+    }
+
+    const wishlistItem = wishlistItems.find(item => item.productId === product.id);
+    
+    if (wishlistItem) {
+      dispatch(removeFromWishlistAsync(wishlistItem.wishlistId));
       toast.success(`${product.title} removed from wishlist!`);
     } else {
-      dispatch(addToWishlist(product));
+      dispatch(addToWishlistAsync(product.id));
       toast.success(`${product.title} added to wishlist!`);
     }
   };

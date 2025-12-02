@@ -90,9 +90,21 @@ export const login = async (req, res) => {
 // -------------------------------------------
 export const getProfile = async (req, res) => {
   try {
-    const user = req.user; // set by auth middleware
-    res.json({ success: true, data: user });
+    const userId = req.user.id; // user ID from JWT token
+
+    // Fetch full user details from database
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Remove password before sending
+    delete user.password;
+
+    res.json({ success: true, data: { user } });
   } catch (err) {
+    console.log("Get Profile Error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };

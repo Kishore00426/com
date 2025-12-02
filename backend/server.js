@@ -23,7 +23,8 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 // import cors from "cors";
 
 app.use(cors({
-  origin: "http://localhost:5173", // frontend URL
+
+  origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"], // frontend URLs
   credentials: true,               // allow cookies
   // methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // allowed methods
   // allowedHeaders: ["Content-Type", "Authorization"],   // allowed headers

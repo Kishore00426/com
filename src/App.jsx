@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -19,8 +21,19 @@ import Register from "./pages/Register";
 import Login from "./pages/LoginPage";
 
 import ProtectedRoute from "./components/ProtectedRoute"; // route guard
+import { fetchWishlist } from "./redux/wishlistSlice";
 
 export default function App() {
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+
+  // Fetch wishlist when user logs in
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchWishlist());
+    }
+  }, [user, dispatch]);
+
   return (
     <>
       <div className="min-h-screen flex flex-col">

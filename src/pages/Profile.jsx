@@ -10,7 +10,7 @@ import { logout } from "../redux/authSlice";
 import { addToCart, fetchCart } from "../redux/cartSlice";
 
 // Wishlist
-import { removeFromWishlist, selectWishlistItems } from "../redux/wishlistSlice";
+import { removeFromWishlistAsync, selectWishlistItems } from "../redux/wishlistSlice";
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -59,6 +59,10 @@ export default function Profile() {
           },
         });
 
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
         let json;
         const contentType = res.headers.get("Content-Type") || "";
         if (contentType.includes("application/json")) {
@@ -67,7 +71,11 @@ export default function Profile() {
           throw new Error("Invalid server response");
         }
 
+        console.log("Profile API response:", json);
+
         const user = json?.data?.user ?? json?.user ?? json;
+
+        console.log("Extracted user:", user);
 
         setUserDetails({
           name: user?.name || "",
@@ -79,6 +87,7 @@ export default function Profile() {
         });
 
       } catch (err) {
+        console.error("Profile fetch error:", err);
         toast.error("Failed to load profile.");
       } finally {
         setLoading(false);
@@ -150,9 +159,9 @@ export default function Profile() {
   // ✔️ Updated — Move wishlist item to backend cart
   const handleAddToCart = async (item) => {
     try {
-      await dispatch(addToCart({ productId: item.id, quantity: 1 })).unwrap();
+      await dispatch(addToCart({ productId: item.productId, quantity: 1 })).unwrap();
 
-      dispatch(removeFromWishlist(item.id));
+      dispatch(removeFromWishlistAsync(item.wishlistId));
 
       // Refresh cart from backend
       dispatch(fetchCart());
@@ -354,7 +363,7 @@ export default function Profile() {
 
                             <button
                               onClick={() =>
-                                dispatch(removeFromWishlist(item.id))
+                                dispatch(removeFromWishlistAsync(item.wishlistId))
                               }
                               className="bg-red-600 text-white py-1 px-3 rounded-md hover:bg-red-700 text-xs"
                             >
