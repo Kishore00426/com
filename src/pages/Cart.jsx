@@ -1,18 +1,32 @@
 // src/pages/Cart.jsx
+import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   selectCartItems,
   selectTotalPrice,
   removeCart,
   updateCart,
+  fetchCart,
 } from "../redux/cartSlice";
+import { selectAuthUser } from "../redux/authSlice";
 
 export default function Cart() {
-  const cartItems = useSelector(selectCartItems);
-  const totalPrice = useSelector(selectTotalPrice);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const cartItems = useSelector(selectCartItems);
+  const totalPrice = useSelector(selectTotalPrice);
+  const user = useSelector(selectAuthUser);
+
+  // Fetch cart on mount if authenticated
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchCart()).catch((err) => {
+        console.error("Failed to load cart:", err);
+      });
+    }
+  }, [user, dispatch]);
 
   const handleQuantityChange = (id, value) => {
     const quantity = parseInt(value);
@@ -51,9 +65,9 @@ export default function Cart() {
           <div className="flex flex-col gap-6">
             {/* Cart Items */}
             <div className="space-y-4">
-              {cartItems.map((item) => (
+              {cartItems.map((item, index) => (
                 <div
-                  key={item.cartId}
+                  key={`${item.cartId}-${item.productId}-${index}`}
                   className="bg-zinc-900 rounded-lg shadow-md p-4 flex items-center space-x-4"
                 >
                   <img

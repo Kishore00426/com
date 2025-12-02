@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import DownloadInvoiceButton from '../components/DownloadInvoiceButton';
+import { fetchOrders, selectOrders, selectOrdersLoading } from '../redux/ordersSlice';
+import Loader from '../components/Loader';
 
 export default function Orders() {
-  const [orders, setOrders] = useState([]);
+  const dispatch = useDispatch();
+  const orders = useSelector(selectOrders);
+  const loading = useSelector(selectOrdersLoading);
   const [expandedOrder, setExpandedOrder] = useState(null);
 
+  // Fetch orders on mount
   useEffect(() => {
-    const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-    setOrders(storedOrders);
-  }, []);
+    dispatch(fetchOrders());
+  }, [dispatch]);
 
   const toggleOrderExpansion = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
+
+  if (loading) {
+    return <Loader />;
+  }
 
   return (
     <main className="flex-grow p-6">
@@ -31,7 +40,7 @@ export default function Orders() {
                 <div className="flex justify-between items-start mb-4">
                   <div className="text-left">
                     <p className="text-gray-400 text-sm whitespace-nowrap">
-                      Order No: #{order.id} | Placed on: <span className='text-orange-200'>{new Date(order.date).toLocaleDateString()} at {new Date(order.date).toLocaleTimeString()}</span> | Payment Method: <span className='text-sky-300'>{
+                      Order No: #{order.id} | Placed on: <span className='text-orange-200'>{new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}</span> | Payment Method: <span className='text-sky-300'>{
                         order.paymentMethod === 'card' ? 'Credit Card' :
                         order.paymentMethod === 'paypal' ? 'PayPal' :
                         order.paymentMethod === 'upi' ? 'UPI' :
@@ -66,14 +75,14 @@ export default function Orders() {
                           </tr>
                         </thead>
                         <tbody>
-                          {order.items.map((item) => (
-                            <tr key={item.id} className="border-b border-gray-700">
+                          {order.items.map((item, idx) => (
+                            <tr key={`${item.orderId}-${item.productId}-${idx}`} className="border-b border-gray-700">
                               <td className="py-2">{item.title}</td>
                               <td className="text-center py-2">{item.quantity}</td>
-                              <td className="text-center py-2">${item.price.toFixed(2)}</td>
-                              <td className="text-center py-2">{item.discountPercentage ? `${item.discountPercentage.toFixed(0)}%` : 'N/A'}</td>
-                              <td className="text-center py-2">{item.discountPercentage > 0 ? 'Discount Applied' : 'No Offers'}</td>
-                              <td className="text-center py-2 font-bold">${(item.price * item.quantity).toFixed(2)}</td>
+                              <td className="text-center py-2">₹{Number(item.price).toFixed(2)}</td>
+                              <td className="text-center py-2">{item.discountPercentage && Number(item.discountPercentage) > 0 ? `${Number(item.discountPercentage).toFixed(0)}%` : 'N/A'}</td>
+                              <td className="text-center py-2">{item.discountPercentage && Number(item.discountPercentage) > 0 ? 'Discount Applied' : 'No Offers'}</td>
+                              <td className="text-center py-2 font-bold">₹{(Number(item.price) * item.quantity).toFixed(2)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -83,19 +92,19 @@ export default function Orders() {
                       <div className="space-y-1 text-sm ">
                         <div className="flex justify-between">
                           <span>Subtotal :</span>
-                          <span className='md:mr-5'>${order.subtotal.toFixed(2)}</span>
+                          <span className='md:mr-5'>₹{Number(order.subtotal).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Tax :</span>
-                          <span className='md:mr-5'>${order.tax.toFixed(2)}</span>
+                          <span className='md:mr-5'>₹{Number(order.tax).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Shipping :</span>
-                          <span className='md:mr-5'>{order.shipping === 0 ? 'FREE' : `$${order.shipping.toFixed(2)}`}</span>
+                          <span className='md:mr-5'>{Number(order.shipping) === 0 ? 'FREE' : `₹${Number(order.shipping).toFixed(2)}`}</span>
                         </div>
                         <div className="flex justify-between font-bold border-t border-gray-600 pt-1">
                           <span>Total</span>
-                          <span className='md:mr-5'>${order.total.toFixed(2)}</span>
+                          <span className='md:mr-5'>₹{Number(order.totalAmount).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>

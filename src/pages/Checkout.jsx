@@ -2,22 +2,23 @@ import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-// import { selectCartItems, selectDiscountedTotal, clearCart } from '../redux/cartSlice';
 import { selectCartItems, selectTotalPrice, clearCart } from '../redux/cartSlice';
+import { createNewOrder, clearOrderSuccess, clearOrderError } from '../redux/ordersSlice';
+import { selectAuthUser } from '../redux/authSlice';
 
 export default function Checkout() {
   const cartItems = useSelector(selectCartItems);
-  // const subtotal = useSelector(selectDiscountedTotal);/
   const subtotal = useSelector(selectTotalPrice);
+  const user = useSelector(selectAuthUser);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    address: '',
-    city: '',
-    zipCode: '',
+    name: user?.name || '',
+    email: user?.email || '',
+    address: user?.address || '',
+    city: user?.city || '',
+    zipCode: user?.zip_code || user?.zipCode || '',
     cardNumber: '',
     expiryDate: '',
     cvv: '',
@@ -47,36 +48,62 @@ export default function Checkout() {
     e.preventDefault();
     setIsProcessing(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
-      // Create order object
-      const order = {
-        id: Date.now().toString(),
-        date: new Date().toISOString(),
-        items: cartItems,
-        subtotal: subtotal,
-        tax: tax,
-        shipping: shipping,
-        total: total,
-        shippingInfo: {
-          name: formData.name,
-          email: formData.email,
-          address: formData.address,
-          city: formData.city,
-          zipCode: formData.zipCode
-        },
-        paymentMethod: paymentMethod
-      };
+    // Validate cart
+    if (!cartItems || cartItems.length === 0) {
+      toast.error('Cart is empty');
+      setIsProcessing(false);
+      return;
+    }
 
-      // Save to localStorage
-      const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      existingOrders.push(order);
-      localStorage.setItem('orders', JSON.stringify(existingOrders));
+    // Validate required form fields
+    if (!formData.name || !formData.email || !formData.address || !formData.city || !formData.zipCode) {
+      toast.error('Please fill in all shipping details');
+      setIsProcessing(false);
+      return;
+    }
 
-      toast.success('Order placed successfully! Thank you for your purchase.');
-      dispatch(clearCart());
-      navigate('/order-success');
-    }, 2000);
+    // Create order object
+    const orderData = {
+      subtotal: Number(subtotal),
+      tax: Number(subtotal * 0.08),
+      shipping: subtotal > 50 ? 0 : 9.99,
+      totalAmount: Number(subtotal + subtotal * 0.08 + (subtotal > 50 ? 0 : 9.99)),
+      shippingInfo: {
+        name: formData.name,
+        email: formData.email,
+        address: formData.address,
+        city: formData.city,
+        zipCode: formData.zipCode
+      },
+      paymentMethod: paymentMethod
+    };
+
+    try {
+      const result = await dispatch(createNewOrder(orderData)).unwrap();
+      
+      if (result.success || result.orderId) {
+        // Save backup to localStorage (optional)
+        const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        existingOrders.push({
+          ...orderData,
+          id: result.orderId || Date.now().toString(),
+          date: new Date().toISOString(),
+        });
+        localStorage.setItem('orders', JSON.stringify(existingOrders));
+
+        toast.success('Order placed successfully!');
+        dispatch(clearCart());
+        setTimeout(() => {
+          navigate('/order-success');
+        }, 500);
+      }
+    } catch (err) {
+      const errorMsg = typeof err === 'string' ? err : err?.message || 'Failed to place order';
+      toast.error(errorMsg);
+      console.error('Order creation error:', err);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (cartItems.length === 0) {
@@ -355,20 +382,20 @@ export default function Checkout() {
 
               {/* Cart Items */}
               <div className="space-y-4 mb-6">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4">
+                {cartItems.map((item, index) => (
+                  <div key={`${item.cartId}-${item.productId}-${index}`} className="flex items-center space-x-4">
                     <img
-                      src={item.image}
-                      alt={item.name}
+                      src={item.image || '/fallback.png'}
+                      alt={item.title}
                       className="w-16 h-16 object-cover rounded-md"
                     />
                     <div className="flex-1">
-                      <h4 className="text-sm font-medium text-white">{item.name}</h4>
+                      <h4 className="text-sm font-medium text-white">{item.title}</h4>
                       <p className="text-sm text-gray-400">Qty: {item.quantity}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-white">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ₹{(item.price * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   </div>

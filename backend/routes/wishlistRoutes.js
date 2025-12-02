@@ -4,10 +4,14 @@ import {
   addToWishlist,
   removeFromWishlist,
 } from "../controllers/wishlistController.js";
+import { requireAuth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// Get all wishlist items
+// All routes require authentication
+router.use(requireAuth);
+
+// Get user's wishlist
 router.get("/", getWishlist);
 
 // Add to wishlist

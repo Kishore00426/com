@@ -1,6 +1,6 @@
 // backend/controllers/cartController.js
 import { db } from "../db/index.js";
-import { cart, products } from "../db/schema.js";
+import { cart, products, productImages } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
 
 // ==============================
@@ -10,7 +10,8 @@ export const getCartItems = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const userCart = await db
+    // First, get all cart items for the user
+    const cartItems = await db
       .select({
         cartId: cart.id,
         quantity: cart.quantity,
@@ -19,13 +20,32 @@ export const getCartItems = async (req, res) => {
         price: products.price,
         discount: products.discount,
         availableStock: products.availableStock,
-        image: products.thumbnail, // CHANGE if needed
       })
       .from(cart)
       .leftJoin(products, eq(cart.productId, products.id))
       .where(eq(cart.userId, userId));
 
-    res.json({ success: true, cart: userCart });
+    // For each cart item, get the first image
+    const enrichedCart = await Promise.all(
+      cartItems.map(async (item) => {
+        const image = await db
+          .select({
+            thumbnail: productImages.thumbnailUrl,
+            preview: productImages.previewUrl,
+            original: productImages.originalUrl,
+          })
+          .from(productImages)
+          .where(eq(productImages.productId, item.productId))
+          .limit(1);
+
+        return {
+          ...item,
+          ...image[0],
+        };
+      })
+    );
+
+    res.json({ success: true, cart: enrichedCart });
   } catch (error) {
     console.error("Get Cart Error:", error);
     res.status(500).json({ success: false, message: "Failed to fetch cart items." });
@@ -39,6 +59,10 @@ export const addToCart = async (req, res) => {
   try {
     const userId = req.user.id;
     const { productId, quantity = 1 } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({ success: false, message: "productId is required" });
+    }
 
     // Check product exists
     const product = await db
@@ -86,6 +110,10 @@ export const updateCartItem = async (req, res) => {
     const userId = req.user.id;
     const { cartId, quantity } = req.body;
 
+    if (!cartId || quantity === undefined) {
+      return res.status(400).json({ success: false, message: "cartId and quantity are required" });
+    }
+
     const cartItem = await db
       .select()
       .from(cart)
@@ -116,6 +144,10 @@ export const removeCartItem = async (req, res) => {
   try {
     const userId = req.user.id;
     const { cartId } = req.params;
+
+    if (!cartId) {
+      return res.status(400).json({ success: false, message: "cartId is required" });
+    }
 
     const cartItem = await db
       .select()
