@@ -158,16 +158,29 @@ export default function Profile() {
 
   // ✔️ Updated — Move wishlist item to backend cart
   const handleAddToCart = async (item) => {
+    const productId = item.productId || item.id;
+    if (!productId) {
+      toast.error("Invalid product data");
+      return;
+    }
     try {
-      await dispatch(addToCart({ productId: item.productId, quantity: 1 })).unwrap();
+      await dispatch(addToCart({ productId, quantity: 1 })).unwrap();
 
-      dispatch(removeFromWishlistAsync(item.wishlistId));
+      if (item.wishlistId) {
+        dispatch(removeFromWishlistAsync(item.wishlistId));
+      } else {
+        // If it's a local item (no wishlistId), we might need a local remove action or just ignore
+        // But since we are logged in (Profile page), we should be using backend items. 
+        // However, for robustness:
+        // dispatch(removeFromWishlist(item.id)); // If I imported the local action
+      }
 
       // Refresh cart from backend
       dispatch(fetchCart());
 
       toast.success("Moved to cart!");
     } catch (err) {
+      console.error(err);
       toast.error("Failed to add to cart");
     }
   };
@@ -314,7 +327,7 @@ export default function Profile() {
             ) : (
               <>
                 <div className="space-y-4">
-                  {currentItems.map((item) => {
+                  {currentItems.map((item, index) => {
                     const title = item.title || item.name || "Untitled product";
                     const thumbnail =
                       item.productImages?.[0]?.image_url ||
@@ -329,7 +342,7 @@ export default function Profile() {
 
                     return (
                       <div
-                        key={item.id}
+                        key={item.wishlistId || item.id || index}
                         className="border border-gray-700 rounded-md p-4"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
@@ -392,11 +405,10 @@ export default function Profile() {
                         <button
                           key={page}
                           onClick={() => setCurrentPage(page)}
-                          className={`px-3 py-1 rounded-md ${
-                            currentPage === page
-                              ? "bg-blue-600 text-white"
-                              : "bg-zinc-700 text-white"
-                          }`}
+                          className={`px-3 py-1 rounded-md ${currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "bg-zinc-700 text-white"
+                            }`}
                         >
                           {page}
                         </button>
