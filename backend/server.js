@@ -14,6 +14,7 @@ dotenv.config();
 const app = express();
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/admin", express.static(path.join(process.cwd(), "fe"))); // Serve admin panel
 
 // // 404 handler for unknown routes (place at the very end, after all other routes)
 // app.all("*", (req, res) => {
@@ -24,7 +25,13 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use(cors({
 
-  origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"], // frontend URLs
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "http://127.0.0.1:5500", // Live Server
+    "http://localhost:5500"  // Live Server
+  ], // frontend URLs
   credentials: true,               // allow cookies
   // methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // allowed methods
   // allowedHeaders: ["Content-Type", "Authorization"],   // allowed headers

@@ -1,12 +1,14 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
 </head>
+
 <body class="bg-gray-100 text-gray-800">
 
   <div class="flex min-h-screen">
@@ -20,10 +22,14 @@
 
       <nav class="p-4">
         <ul class="space-y-1">
-          <li><button data-view="home" class="nav-btn w-full text-left px-3 py-2 rounded hover:bg-gray-50">Dashboard</button></li>
-          <li><button data-view="products" class="nav-btn w-full text-left px-3 py-2 rounded hover:bg-gray-50">Products</button></li>
-          <li><button data-view="categories" class="nav-btn w-full text-left px-3 py-2 rounded hover:bg-gray-50">Categories</button></li>
-          <li><button data-view="tags" class="nav-btn w-full text-left px-3 py-2 rounded hover:bg-gray-50">Tags</button></li>
+          <li><button data-view="home"
+              class="nav-btn w-full text-left px-3 py-2 rounded hover:bg-gray-50">Dashboard</button></li>
+          <li><button data-view="products"
+              class="nav-btn w-full text-left px-3 py-2 rounded hover:bg-gray-50">Products</button></li>
+          <li><button data-view="categories"
+              class="nav-btn w-full text-left px-3 py-2 rounded hover:bg-gray-50">Categories</button></li>
+          <li><button data-view="tags" class="nav-btn w-full text-left px-3 py-2 rounded hover:bg-gray-50">Tags</button>
+          </li>
         </ul>
       </nav>
     </aside>
@@ -67,7 +73,8 @@
               <h3 class="font-semibold">Quick product add</h3>
               <p class="text-sm text-gray-500">Use the Products page for full control — this is a shortcut.</p>
               <div class="mt-4">
-                <button class="bg-blue-600 text-white px-4 py-2 rounded" data-view="products" onclick="showView('products')">Open Products</button>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded" data-view="products"
+                  onclick="showView('products')">Open Products</button>
               </div>
             </div>
 
@@ -75,8 +82,10 @@
               <h3 class="font-semibold">Manage categories & tags</h3>
               <p class="text-sm text-gray-500">Create, edit, or remove categories and tags here.</p>
               <div class="mt-4 flex gap-2">
-                <button class="bg-green-600 text-white px-3 py-2 rounded" data-view="categories" onclick="showView('categories')">Categories</button>
-                <button class="bg-indigo-600 text-white px-3 py-2 rounded" data-view="tags" onclick="showView('tags')">Tags</button>
+                <button class="bg-green-600 text-white px-3 py-2 rounded" data-view="categories"
+                  onclick="showView('categories')">Categories</button>
+                <button class="bg-indigo-600 text-white px-3 py-2 rounded" data-view="tags"
+                  onclick="showView('tags')">Tags</button>
               </div>
             </div>
           </div>
@@ -209,7 +218,12 @@
 
             <table class="min-w-full">
               <thead class="bg-gray-50">
-                <tr><th class="p-2">ID</th><th class="p-2">Name</th><th class="p-2">Description</th><th class="p-2">Actions</th></tr>
+                <tr>
+                  <th class="p-2">ID</th>
+                  <th class="p-2">Name</th>
+                  <th class="p-2">Description</th>
+                  <th class="p-2">Actions</th>
+                </tr>
               </thead>
               <tbody id="categoriesTable" class="divide-y"></tbody>
             </table>
@@ -229,7 +243,11 @@
 
             <table class="min-w-full">
               <thead class="bg-gray-50">
-                <tr><th class="p-2">ID</th><th class="p-2">Name</th><th class="p-2">Actions</th></tr>
+                <tr>
+                  <th class="p-2">ID</th>
+                  <th class="p-2">Name</th>
+                  <th class="p-2">Actions</th>
+                </tr>
               </thead>
               <tbody id="tagsTable" class="divide-y"></tbody>
             </table>
@@ -240,108 +258,108 @@
     </div>
   </div>
 
-<script>
-/* --------- Config --------- */
-const API_BASE = "http://localhost:5000/api";
-const PRODUCTS_API = `${API_BASE}/products`;
-const CATEGORIES_API = `${API_BASE}/categories`;
-const TAGS_API = `${API_BASE}/tags`;
+  <script>
+    /* --------- Config --------- */
+    const API_BASE = "http://localhost:5000/api";
+    const PRODUCTS_API = `${API_BASE}/products`;
+    const CATEGORIES_API = `${API_BASE}/categories`;
+    const TAGS_API = `${API_BASE}/tags`;
 
-/* --------- Simple SPA Router (show/hide) --------- */
-const views = document.querySelectorAll(".view");
-function showView(name) {
-  views.forEach(v => v.id === `view-${name}` ? v.classList.remove("hidden") : v.classList.add("hidden"));
-  document.getElementById("pageTitle").textContent = name.charAt(0).toUpperCase() + name.slice(1);
-  // refresh data when switching
-  if (name === "products") loadProducts();
-  if (name === "categories") loadCategoriesTable();
-  if (name === "tags") loadTagsTable();
-}
-document.querySelectorAll(".nav-btn").forEach(btn => btn.addEventListener("click", () => showView(btn.dataset.view)));
-document.getElementById("mobileMenuBtn").addEventListener("click", () => {
-  document.querySelector("aside").classList.toggle("hidden");
-});
-
-/* --------- Globals for selections --------- */
-let categoriesCache = [];
-let tagsCache = [];
-let selectedTagIds = []; // ints
-
-/* --------- Utility helpers --------- */
-const tryJson = txt => { try { return JSON.parse(txt); } catch(e){ return null; } };
-const apiJson = async (url, opts) => {
-  const res = await fetch(url, opts);
-  return res.json();
-};
-
-/* --------- Load categories into selects and caches --------- */
-async function loadCategories() {
-  const res = await apiJson(CATEGORIES_API);
-  const data = res.data || res.categories || [];
-  categoriesCache = data;
-  // populate product category select if present
-  const catSelect = document.getElementById("categorySelect");
-  if (catSelect) {
-    catSelect.innerHTML = "";
-    data.forEach(c => {
-      const opt = document.createElement("option");
-      opt.value = c.id;
-      opt.textContent = c.name;
-      catSelect.appendChild(opt);
+    /* --------- Simple SPA Router (show/hide) --------- */
+    const views = document.querySelectorAll(".view");
+    function showView(name) {
+      views.forEach(v => v.id === `view-${name}` ? v.classList.remove("hidden") : v.classList.add("hidden"));
+      document.getElementById("pageTitle").textContent = name.charAt(0).toUpperCase() + name.slice(1);
+      // refresh data when switching
+      if (name === "products") loadProducts();
+      if (name === "categories") loadCategoriesTable();
+      if (name === "tags") loadTagsTable();
+    }
+    document.querySelectorAll(".nav-btn").forEach(btn => btn.addEventListener("click", () => showView(btn.dataset.view)));
+    document.getElementById("mobileMenuBtn").addEventListener("click", () => {
+      document.querySelector("aside").classList.toggle("hidden");
     });
-  }
-  // update stats
-  document.getElementById("statCategories").textContent = data.length;
-}
-async function loadTags() {
-  const res = await apiJson(TAGS_API);
-  const data = res.data || res.tags || [];
-  tagsCache = data;
-  const tagSelect = document.getElementById("tagSelect");
-  if (tagSelect) {
-    tagSelect.innerHTML = `<option value="">Select tag</option>`;
-    data.forEach(t => {
-      const opt = document.createElement("option");
-      opt.value = t.id;
-      opt.textContent = t.name;
-      tagSelect.appendChild(opt);
+
+    /* --------- Globals for selections --------- */
+    let categoriesCache = [];
+    let tagsCache = [];
+    let selectedTagIds = []; // ints
+
+    /* --------- Utility helpers --------- */
+    const tryJson = txt => { try { return JSON.parse(txt); } catch (e) { return null; } };
+    const apiJson = async (url, opts) => {
+      const res = await fetch(url, opts);
+      return res.json();
+    };
+
+    /* --------- Load categories into selects and caches --------- */
+    async function loadCategories() {
+      const res = await apiJson(CATEGORIES_API);
+      const data = res.data || res.categories || [];
+      categoriesCache = data;
+      // populate product category select if present
+      const catSelect = document.getElementById("categorySelect");
+      if (catSelect) {
+        catSelect.innerHTML = "";
+        data.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.name;
+          catSelect.appendChild(opt);
+        });
+      }
+      // update stats
+      document.getElementById("statCategories").textContent = data.length;
+    }
+    async function loadTags() {
+      const res = await apiJson(TAGS_API);
+      const data = res.data || res.tags || [];
+      tagsCache = data;
+      const tagSelect = document.getElementById("tagSelect");
+      if (tagSelect) {
+        tagSelect.innerHTML = `<option value="">Select tag</option>`;
+        data.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t.id;
+          opt.textContent = t.name;
+          tagSelect.appendChild(opt);
+        });
+      }
+      document.getElementById("statTags").textContent = data.length;
+    }
+
+    /* --------- Products: list, create, edit, delete --------- */
+    const productsTable = document.getElementById("productsTable");
+    const productForm = document.getElementById("productForm");
+
+    // image preview
+    const imageInput = document.getElementById("image");
+    const imagePreview = document.getElementById("imagePreview");
+    imageInput.addEventListener("change", () => {
+      const f = imageInput.files[0];
+      if (f) {
+        imagePreview.src = URL.createObjectURL(f);
+        imagePreview.classList.remove("hidden");
+      } else {
+        imagePreview.classList.add("hidden");
+      }
     });
-  }
-  document.getElementById("statTags").textContent = data.length;
-}
 
-/* --------- Products: list, create, edit, delete --------- */
-const productsTable = document.getElementById("productsTable");
-const productForm = document.getElementById("productForm");
+    // initialize selects and caches
+    loadCategories();
+    loadTags();
 
-// image preview
-const imageInput = document.getElementById("image");
-const imagePreview = document.getElementById("imagePreview");
-imageInput.addEventListener("change", () => {
-  const f = imageInput.files[0];
-  if (f) {
-    imagePreview.src = URL.createObjectURL(f);
-    imagePreview.classList.remove("hidden");
-  } else {
-    imagePreview.classList.add("hidden");
-  }
-});
+    // load products
+    async function loadProducts() {
+      const res = await apiJson(PRODUCTS_API);
+      const prods = res.products || res.data || [];
+      document.getElementById("statProducts").textContent = prods.length;
 
-// initialize selects and caches
-loadCategories();
-loadTags();
-
-// load products
-async function loadProducts() {
-  const res = await apiJson(PRODUCTS_API);
-  const prods = res.products || res.data || [];
-  document.getElementById("statProducts").textContent = prods.length;
-
-  productsTable.innerHTML = prods.map(p => {
-    const cats = (p.categories || []).map(c => c.name).join(", ");
-    const tags = (p.tags || []).map(t => t.name).join(", ");
-    const img = (p.images && p.images.length) ? `<img src="http://localhost:5000${p.images[0]}" class="w-20 rounded" />` : "—";
-    return `
+      productsTable.innerHTML = prods.map(p => {
+        const cats = (p.categories || []).map(c => c.name).join(", ");
+        const tags = (p.tags || []).map(t => t.name).join(", ");
+        const img = (p.images && p.images.length) ? `<img src="http://localhost:5000${p.images[0]}" class="w-20 rounded" />` : "—";
+        return `
       <tr>
         <td class="p-2">${p.id}</td>
         <td class="p-2">${p.title}</td>
@@ -356,189 +374,189 @@ async function loadProducts() {
         </td>
       </tr>
     `;
-  }).join("");
-}
+      }).join("");
+    }
 
-// save / create product
-productForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const id = Number(document.getElementById("productId").value || 0);
+    // save / create product
+    productForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = Number(document.getElementById("productId").value || 0);
 
-  // gather form values
-  const title = document.getElementById("title").value.trim();
-  const description = document.getElementById("description").value.trim();
-  const price = document.getElementById("price").value;
-  const discount = document.getElementById("discount").value || "0";
-  const stock = document.getElementById("stock").value;
-  const availableStock = document.getElementById("availableStock").value;
-  const brand = document.getElementById("brand").value;
-  const warrantyInfo = document.getElementById("warrantyInfo").value;
+      // gather form values
+      const title = document.getElementById("title").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const price = document.getElementById("price").value;
+      const discount = document.getElementById("discount").value || "0";
+      const stock = document.getElementById("stock").value;
+      const availableStock = document.getElementById("availableStock").value;
+      const brand = document.getElementById("brand").value;
+      const warrantyInfo = document.getElementById("warrantyInfo").value;
 
-  const categorySelect = document.getElementById("categorySelect");
-  const categoryIds = Array.from(categorySelect.selectedOptions).map(o => Number(o.value));
+      const categorySelect = document.getElementById("categorySelect");
+      const categoryIds = Array.from(categorySelect.selectedOptions).map(o => Number(o.value));
 
-  // tags by selectedTagIds
-  const tagIds = selectedTagIds.slice(); // array of ints
+      // tags by selectedTagIds
+      const tagIds = selectedTagIds.slice(); // array of ints
 
-  // validation (simple)
-  if (!title || !description || !price || !stock || categoryIds.length === 0) {
-    alert("Please fill required fields and choose at least one category.");
-    return;
-  }
+      // validation (simple)
+      if (!title || !description || !price || !stock || categoryIds.length === 0) {
+        alert("Please fill required fields and choose at least one category.");
+        return;
+      }
 
-  const fd = new FormData();
-  fd.append("title", title);
-  fd.append("description", description);
-  fd.append("price", String(price));
-  fd.append("discount", String(discount));
-  fd.append("stock", String(stock));
-  fd.append("availableStock", String(availableStock));
-  fd.append("brand", brand);
-  fd.append("warrantyInfo", warrantyInfo);
-  fd.append("categoryIds", JSON.stringify(categoryIds));
-  // send tags as array of ids (backend accepts ids or names)
-  fd.append("tags", JSON.stringify(tagIds));
+      const fd = new FormData();
+      fd.append("title", title);
+      fd.append("description", description);
+      fd.append("price", String(price));
+      fd.append("discount", String(discount));
+      fd.append("stock", String(stock));
+      fd.append("availableStock", String(availableStock));
+      fd.append("brand", brand);
+      fd.append("warrantyInfo", warrantyInfo);
+      fd.append("categoryIds", JSON.stringify(categoryIds));
+      // send tags as array of ids (backend accepts ids or names)
+      fd.append("tags", JSON.stringify(tagIds));
 
-  const file = imageInput.files[0];
-  if (file) fd.append("image", file);
+      const file = imageInput.files[0];
+      if (file) fd.append("image1", file);
 
-  const url = id ? `${PRODUCTS_API}/${id}` : PRODUCTS_API;
-  const method = id ? "PUT" : "POST";
+      const url = id ? `${PRODUCTS_API}/${id}` : PRODUCTS_API;
+      const method = id ? "PUT" : "POST";
 
-  await fetch(url, { method, body: fd });
-  // reset & reload
-  productForm.reset();
-  selectedTagIds = [];
-  renderTagChips();
-  imagePreview.classList.add("hidden");
-  loadProducts();
-  loadCategories();
-  loadTags();
-  document.getElementById("productFormTitle").textContent = "Add Product";
-});
+      await fetch(url, { method, body: fd });
+      // reset & reload
+      productForm.reset();
+      selectedTagIds = [];
+      renderTagChips();
+      imagePreview.classList.add("hidden");
+      loadProducts();
+      loadCategories();
+      loadTags();
+      document.getElementById("productFormTitle").textContent = "Add Product";
+    });
 
-/* --------- Edit product ---------- */
-async function editProduct(id) {
-  const res = await apiJson(`${PRODUCTS_API}/${id}`);
-  const p = res.product || res.data;
-  if (!p) return alert("Product not found");
+    /* --------- Edit product ---------- */
+    async function editProduct(id) {
+      const res = await apiJson(`${PRODUCTS_API}/${id}`);
+      const p = res.product || res.data;
+      if (!p) return alert("Product not found");
 
-  document.getElementById("productId").value = p.id;
-  document.getElementById("title").value = p.title || "";
-  document.getElementById("description").value = p.description || "";
-  document.getElementById("price").value = p.price || "";
-  document.getElementById("discount").value = p.discount || "0";
-  document.getElementById("stock").value = p.stock || "";
-  document.getElementById("availableStock").value = p.availableStock || "";
-  document.getElementById("brand").value = p.brand || "";
-  document.getElementById("warrantyInfo").value = p.warrantyInfo || "";
+      document.getElementById("productId").value = p.id;
+      document.getElementById("title").value = p.title || "";
+      document.getElementById("description").value = p.description || "";
+      document.getElementById("price").value = p.price || "";
+      document.getElementById("discount").value = p.discount || "0";
+      document.getElementById("stock").value = p.stock || "";
+      document.getElementById("availableStock").value = p.availableStock || "";
+      document.getElementById("brand").value = p.brand || "";
+      document.getElementById("warrantyInfo").value = p.warrantyInfo || "";
 
-  // categories: mark selected options
-  const catSelect = document.getElementById("categorySelect");
-  const selectedCatIds = (p.categories || []).map(c => c.id);
-  Array.from(catSelect.options).forEach(opt => {
-    opt.selected = selectedCatIds.includes(Number(opt.value));
-  });
+      // categories: mark selected options
+      const catSelect = document.getElementById("categorySelect");
+      const selectedCatIds = (p.categories || []).map(c => c.id);
+      Array.from(catSelect.options).forEach(opt => {
+        opt.selected = selectedCatIds.includes(Number(opt.value));
+      });
 
-  // tags: set selectedTagIds and render chips
-  selectedTagIds = (p.tags || []).map(t => t.id);
-  renderTagChips();
+      // tags: set selectedTagIds and render chips
+      selectedTagIds = (p.tags || []).map(t => t.id);
+      renderTagChips();
 
-  // image preview
-  if (p.images && p.images.length) {
-    imagePreview.src = `http://localhost:5000${p.images[0]}`;
-    imagePreview.classList.remove("hidden");
-  } else {
-    imagePreview.classList.add("hidden");
-  }
+      // image preview
+      if (p.images && p.images.length) {
+        imagePreview.src = `http://localhost:5000${p.images[0]}`;
+        imagePreview.classList.remove("hidden");
+      } else {
+        imagePreview.classList.add("hidden");
+      }
 
-  document.getElementById("productFormTitle").textContent = "Edit Product";
-  // scroll to form
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
+      document.getElementById("productFormTitle").textContent = "Edit Product";
+      // scroll to form
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
 
-/* --------- Delete product ---------- */
-async function deleteProduct(id) {
-  if (!confirm("Delete product?")) return;
-  await fetch(`${PRODUCTS_API}/${id}`, { method: "DELETE" });
-  loadProducts();
-}
+    /* --------- Delete product ---------- */
+    async function deleteProduct(id) {
+      if (!confirm("Delete product?")) return;
+      await fetch(`${PRODUCTS_API}/${id}`, { method: "DELETE" });
+      loadProducts();
+    }
 
-/* --------- Tags chips UI --------- */
-const tagSelect = document.getElementById("tagSelect");
-const tagChipsRoot = document.getElementById("tagChips");
+    /* --------- Tags chips UI --------- */
+    const tagSelect = document.getElementById("tagSelect");
+    const tagChipsRoot = document.getElementById("tagChips");
 
-// render tag chips
-function renderTagChips() {
-  tagChipsRoot.innerHTML = "";
-  selectedTagIds.forEach(id => {
-    const tag = tagsCache.find(t => t.id === id);
-    const name = tag ? tag.name : `#${id}`;
-    const chip = document.createElement("span");
-    chip.className = "px-3 py-1 bg-blue-100 rounded-full flex items-center gap-2";
-    chip.innerHTML = `${escapeHtml(name)} <button class="text-red-600 font-bold" data-id="${id}">×</button>`;
-    chip.querySelector("button").addEventListener("click", (e) => {
-      const rem = Number(e.target.dataset.id);
-      selectedTagIds = selectedTagIds.filter(x => x !== rem);
+    // render tag chips
+    function renderTagChips() {
+      tagChipsRoot.innerHTML = "";
+      selectedTagIds.forEach(id => {
+        const tag = tagsCache.find(t => t.id === id);
+        const name = tag ? tag.name : `#${id}`;
+        const chip = document.createElement("span");
+        chip.className = "px-3 py-1 bg-blue-100 rounded-full flex items-center gap-2";
+        chip.innerHTML = `${escapeHtml(name)} <button class="text-red-600 font-bold" data-id="${id}">×</button>`;
+        chip.querySelector("button").addEventListener("click", (e) => {
+          const rem = Number(e.target.dataset.id);
+          selectedTagIds = selectedTagIds.filter(x => x !== rem);
+          renderTagChips();
+        });
+        tagChipsRoot.appendChild(chip);
+      });
+    }
+
+    // when selecting from dropdown add to chips
+    tagSelect.addEventListener("change", () => {
+      const id = Number(tagSelect.value);
+      if (!id || selectedTagIds.includes(id)) return;
+      selectedTagIds.push(id);
       renderTagChips();
     });
-    tagChipsRoot.appendChild(chip);
-  });
-}
 
-// when selecting from dropdown add to chips
-tagSelect.addEventListener("change", () => {
-  const id = Number(tagSelect.value);
-  if (!id || selectedTagIds.includes(id)) return;
-  selectedTagIds.push(id);
-  renderTagChips();
-});
+    // create tag inline (button near select)
+    document.getElementById("createTagBtn").addEventListener("click", async () => {
+      const name = (tagSelect.value && !isNaN(Number(tagSelect.value))) ? null : tagSelect.options[tagSelect.selectedIndex].text;
+      // prompt for new tag name
+      const newName = prompt("New tag name:");
+      if (!newName) return;
+      const res = await apiJson(TAGS_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName.trim() })
+      });
+      if (res.success) {
+        await loadTags();
+        // select the newly created tag
+        const newTag = (res.data || res).id ? (res.data || res) : null;
+        // find by name in cache, push id
+        const created = tagsCache.find(t => t.name === newName.trim());
+        if (created) {
+          selectedTagIds.push(created.id);
+          renderTagChips();
+        }
+      } else {
+        alert(res.message || "Failed to create tag");
+      }
+    });
 
-// create tag inline (button near select)
-document.getElementById("createTagBtn").addEventListener("click", async () => {
-  const name = (tagSelect.value && !isNaN(Number(tagSelect.value))) ? null : tagSelect.options[tagSelect.selectedIndex].text;
-  // prompt for new tag name
-  const newName = prompt("New tag name:");
-  if (!newName) return;
-  const res = await apiJson(TAGS_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: newName.trim() })
-  });
-  if (res.success) {
-    await loadTags();
-    // select the newly created tag
-    const newTag = (res.data || res).id ? (res.data || res) : null;
-    // find by name in cache, push id
-    const created = tagsCache.find(t => t.name === newName.trim());
-    if (created) {
-      selectedTagIds.push(created.id);
-      renderTagChips();
-    }
-  } else {
-    alert(res.message || "Failed to create tag");
-  }
-});
+    /* --------- Categories CRUD ---------- */
+    const categoriesTable = document.getElementById("categoriesTable");
+    document.getElementById("createCategoryBtn").addEventListener("click", async () => {
+      const name = document.getElementById("newCategoryName").value.trim();
+      if (!name) return alert("Enter category name");
+      const res = await apiJson(CATEGORIES_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+      });
+      document.getElementById("newCategoryName").value = "";
+      await loadCategories();
+      loadCategoriesTable();
+    });
 
-/* --------- Categories CRUD ---------- */
-const categoriesTable = document.getElementById("categoriesTable");
-document.getElementById("createCategoryBtn").addEventListener("click", async () => {
-  const name = document.getElementById("newCategoryName").value.trim();
-  if (!name) return alert("Enter category name");
-  const res = await apiJson(CATEGORIES_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name })
-  });
-  document.getElementById("newCategoryName").value = "";
-  await loadCategories();
-  loadCategoriesTable();
-});
-
-async function loadCategoriesTable() {
-  const res = await apiJson(CATEGORIES_API);
-  const items = res.data || [];
-  categoriesTable.innerHTML = items.map(c => `
+    async function loadCategoriesTable() {
+      const res = await apiJson(CATEGORIES_API);
+      const items = res.data || [];
+      categoriesTable.innerHTML = items.map(c => `
     <tr>
       <td class="p-2">${c.id}</td>
       <td class="p-2">${c.name}</td>
@@ -549,46 +567,46 @@ async function loadCategoriesTable() {
       </td>
     </tr>
   `).join("");
-}
+    }
 
-window.promptEditCategory = async (id, oldName) => {
-  const newName = prompt("Edit category name:", oldName);
-  if (!newName) return;
-  await apiJson(`${CATEGORIES_API}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: newName })
-  });
-  await loadCategories();
-  await loadCategoriesTable();
-};
+    window.promptEditCategory = async (id, oldName) => {
+      const newName = prompt("Edit category name:", oldName);
+      if (!newName) return;
+      await apiJson(`${CATEGORIES_API}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName })
+      });
+      await loadCategories();
+      await loadCategoriesTable();
+    };
 
-async function deleteCategory(id) {
-  if (!confirm("Delete category?")) return;
-  await fetch(`${CATEGORIES_API}/${id}`, { method: "DELETE" });
-  await loadCategories();
-  await loadCategoriesTable();
-}
+    async function deleteCategory(id) {
+      if (!confirm("Delete category?")) return;
+      await fetch(`${CATEGORIES_API}/${id}`, { method: "DELETE" });
+      await loadCategories();
+      await loadCategoriesTable();
+    }
 
-/* --------- Tags CRUD ---------- */
-const tagsTable = document.getElementById("tagsTable");
-document.getElementById("createTagMainBtn").addEventListener("click", async () => {
-  const name = document.getElementById("newTagName").value.trim();
-  if (!name) return alert("Enter tag name");
-  const res = await apiJson(TAGS_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name })
-  });
-  document.getElementById("newTagName").value = "";
-  await loadTags();
-  loadTagsTable();
-});
+    /* --------- Tags CRUD ---------- */
+    const tagsTable = document.getElementById("tagsTable");
+    document.getElementById("createTagMainBtn").addEventListener("click", async () => {
+      const name = document.getElementById("newTagName").value.trim();
+      if (!name) return alert("Enter tag name");
+      const res = await apiJson(TAGS_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+      });
+      document.getElementById("newTagName").value = "";
+      await loadTags();
+      loadTagsTable();
+    });
 
-async function loadTagsTable() {
-  const res = await apiJson(TAGS_API);
-  const items = res.data || [];
-  tagsTable.innerHTML = items.map(t => `
+    async function loadTagsTable() {
+      const res = await apiJson(TAGS_API);
+      const items = res.data || [];
+      tagsTable.innerHTML = items.map(t => `
     <tr>
       <td class="p-2">${t.id}</td>
       <td class="p-2">${t.name}</td>
@@ -598,43 +616,43 @@ async function loadTagsTable() {
       </td>
     </tr>
   `).join("");
-}
+    }
 
-window.promptEditTag = async (id, oldName) => {
-  const newName = prompt("Edit tag name:", oldName);
-  if (!newName) return;
-  await apiJson(`${TAGS_API}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: newName })
-  });
-  await loadTags();
-  await loadTagsTable();
-};
+    window.promptEditTag = async (id, oldName) => {
+      const newName = prompt("Edit tag name:", oldName);
+      if (!newName) return;
+      await apiJson(`${TAGS_API}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName })
+      });
+      await loadTags();
+      await loadTagsTable();
+    };
 
-async function deleteTag(id) {
-  if (!confirm("Delete tag?")) return;
-  await fetch(`${TAGS_API}/${id}`, { method: "DELETE" });
-  await loadTags();
-  await loadTagsTable();
-}
+    async function deleteTag(id) {
+      if (!confirm("Delete tag?")) return;
+      await fetch(`${TAGS_API}/${id}`, { method: "DELETE" });
+      await loadTags();
+      await loadTagsTable();
+    }
 
-/* --------- Helpers for escaping text ---------- */
-function escapeHtml(s){ if(!s) return ""; return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function escapeAttr(s){ return (s+"").replace(/'/g,"\\'").replace(/"/g,'\"'); }
+    /* --------- Helpers for escaping text ---------- */
+    function escapeHtml(s) { if (!s) return ""; return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    function escapeAttr(s) { return (s + "").replace(/'/g, "\\'").replace(/"/g, '\"'); }
 
-/* --------- Refresh buttons & search ---------- */
-document.getElementById("refreshProducts").addEventListener("click", loadProducts);
-document.getElementById("productSearch").addEventListener("input", async (e) => {
-  const q = e.target.value.toLowerCase();
-  const res = await apiJson(PRODUCTS_API);
-  const prods = res.products || res.data || [];
-  const filtered = prods.filter(p => (p.title || "").toLowerCase().includes(q));
-  productsTable.innerHTML = filtered.map(p => {
-    const cats = (p.categories || []).map(c => c.name).join(", ");
-    const tags = (p.tags || []).map(t => t.name).join(", ");
-    const img = (p.images && p.images.length) ? `<img src="http://localhost:5000${p.images[0]}" class="w-20 rounded" />` : "—";
-    return `
+    /* --------- Refresh buttons & search ---------- */
+    document.getElementById("refreshProducts").addEventListener("click", loadProducts);
+    document.getElementById("productSearch").addEventListener("input", async (e) => {
+      const q = e.target.value.toLowerCase();
+      const res = await apiJson(PRODUCTS_API);
+      const prods = res.products || res.data || [];
+      const filtered = prods.filter(p => (p.title || "").toLowerCase().includes(q));
+      productsTable.innerHTML = filtered.map(p => {
+        const cats = (p.categories || []).map(c => c.name).join(", ");
+        const tags = (p.tags || []).map(t => t.name).join(", ");
+        const img = (p.images && p.images.length) ? `<img src="http://localhost:5000${p.images[0]}" class="w-20 rounded" />` : "—";
+        return `
       <tr>
         <td class="p-2">${p.id}</td>
         <td class="p-2">${p.title}</td>
@@ -649,12 +667,13 @@ document.getElementById("productSearch").addEventListener("input", async (e) => 
         </td>
       </tr>
     `;
-  }).join("");
-});
+      }).join("");
+    });
 
-/* --------- Initial view --------- */
-showView('home');
-</script>
+    /* --------- Initial view --------- */
+    showView('home');
+  </script>
 
 </body>
+
 </html>
