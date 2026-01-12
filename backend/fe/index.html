@@ -161,9 +161,29 @@
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium">Image</label>
-                  <input id="image" type="file" accept="image/*" class="w-full" />
-                  <img id="imagePreview" class="mt-3 w-36 hidden rounded" alt="preview" />
+                  <label class="block text-sm font-medium">Images (Max 4)</label>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <span class="text-xs text-gray-500">Image 1 (Thumbnail)</span>
+                      <input id="image1" type="file" accept="image/*" class="w-full text-sm" />
+                      <img id="preview1" class="mt-2 w-20 h-20 object-cover hidden rounded border" />
+                    </div>
+                    <div>
+                      <span class="text-xs text-gray-500">Image 2</span>
+                      <input id="image2" type="file" accept="image/*" class="w-full text-sm" />
+                      <img id="preview2" class="mt-2 w-20 h-20 object-cover hidden rounded border" />
+                    </div>
+                    <div>
+                      <span class="text-xs text-gray-500">Image 3</span>
+                      <input id="image3" type="file" accept="image/*" class="w-full text-sm" />
+                      <img id="preview3" class="mt-2 w-20 h-20 object-cover hidden rounded border" />
+                    </div>
+                    <div>
+                      <span class="text-xs text-gray-500">Image 4</span>
+                      <input id="image4" type="file" accept="image/*" class="w-full text-sm" />
+                      <img id="preview4" class="mt-2 w-20 h-20 object-cover hidden rounded border" />
+                    </div>
+                  </div>
                 </div>
 
                 <div class="flex gap-2">
@@ -333,16 +353,19 @@
     const productForm = document.getElementById("productForm");
 
     // image preview
-    const imageInput = document.getElementById("image");
-    const imagePreview = document.getElementById("imagePreview");
-    imageInput.addEventListener("change", () => {
-      const f = imageInput.files[0];
-      if (f) {
-        imagePreview.src = URL.createObjectURL(f);
-        imagePreview.classList.remove("hidden");
-      } else {
-        imagePreview.classList.add("hidden");
-      }
+    // image previews
+    [1, 2, 3, 4].forEach(i => {
+      const input = document.getElementById(`image${i}`);
+      const preview = document.getElementById(`preview${i}`);
+      input.addEventListener("change", () => {
+        const f = input.files[0];
+        if (f) {
+          preview.src = URL.createObjectURL(f);
+          preview.classList.remove("hidden");
+        } else {
+          preview.classList.add("hidden");
+        }
+      });
     });
 
     // initialize selects and caches
@@ -417,8 +440,11 @@
       // send tags as array of ids (backend accepts ids or names)
       fd.append("tags", JSON.stringify(tagIds));
 
-      const file = imageInput.files[0];
-      if (file) fd.append("image1", file);
+      // Append images 1-4
+      for (let i = 1; i <= 4; i++) {
+        const f = document.getElementById(`image${i}`).files[0];
+        if (f) fd.append(`image${i}`, f);
+      }
 
       const url = id ? `${PRODUCTS_API}/${id}` : PRODUCTS_API;
       const method = id ? "PUT" : "POST";
@@ -428,7 +454,8 @@
       productForm.reset();
       selectedTagIds = [];
       renderTagChips();
-      imagePreview.classList.add("hidden");
+      // clear previews
+      [1, 2, 3, 4].forEach(i => document.getElementById(`preview${i}`).classList.add("hidden"));
       loadProducts();
       loadCategories();
       loadTags();
@@ -463,12 +490,22 @@
       renderTagChips();
 
       // image preview
-      if (p.images && p.images.length) {
-        imagePreview.src = `http://localhost:5000${p.images[0]}`;
-        imagePreview.classList.remove("hidden");
-      } else {
-        imagePreview.classList.add("hidden");
-      }
+      // image previews (show if present in images array, assuming order matches or we just pick first few)
+      // The backend returns images as objects: { thumbnail, preview, original }
+      // But we need to know which "slot" (image1..4) they belong to. 
+      // Current backend `getProducts` returns images array which might not map 1:1 to slots if some are empty.
+      // For simplicity, we just fill available slots.
+      [1, 2, 3, 4].forEach(i => {
+        const pView = document.getElementById(`preview${i}`);
+        // If we have an image at index i-1
+        if (p.images && p.images[i - 1]) {
+          // use thumbnail url for preview
+          pView.src = `http://localhost:5000${p.images[i - 1].thumbnail}`;
+          pView.classList.remove("hidden");
+        } else {
+          pView.classList.add("hidden");
+        }
+      });
 
       document.getElementById("productFormTitle").textContent = "Edit Product";
       // scroll to form
