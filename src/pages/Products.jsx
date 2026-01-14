@@ -272,7 +272,7 @@ export default function Products() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('https://ecom-18ve.onrender.com');
+        const response = await fetch('https://com-backend-n2cr.onrender.com');
         if (!response.ok) throw new Error('Failed to fetch products');
 
         const data = await response.json();

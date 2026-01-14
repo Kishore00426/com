@@ -1,4 +1,4 @@
-// const API_URL = "https://ecom-18ve.onrender.com";
+// const API_URL = "https://com-backend-n2cr.onrender.com";
 
 // const form = document.getElementById("productForm");
 // const tableBody = document.getElementById("productsTableBody");
