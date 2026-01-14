@@ -272,7 +272,7 @@ export default function Products() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/products');
+        const response = await fetch('https://ecom-18ve.onrender.com');
         if (!response.ok) throw new Error('Failed to fetch products');
 
         const data = await response.json();
@@ -420,8 +420,8 @@ export default function Products() {
               <button
                 onClick={() => handleWishlistToggle(product)}
                 className={`absolute top-2 right-2 p-2 rounded-full transition-colors duration-200 ${isInWishlist(product.id)
-                    ? 'bg-red-500 text-white hover:bg-red-600'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-red-500 text-white hover:bg-red-600'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
               >
                 ♥
