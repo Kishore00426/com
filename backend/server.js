@@ -30,7 +30,8 @@ app.use(cors({
     "http://localhost:5174",
     "http://localhost:3000",
     "http://127.0.0.1:5500", // Live Server
-    "http://localhost:5500"  // Live Server
+    "http://localhost:5500",  // Live Server
+    "https://com-frontend-unvw.onrender.com" // Deployed Frontend
   ], // frontend URLs
   credentials: true,               // allow cookies
   // methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // allowed methods
