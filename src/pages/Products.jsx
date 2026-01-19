@@ -9,6 +9,8 @@ import ProductFilters from '../components/ProductFilters';
 import AddToCartButton from '../components/AddToCartButton';
 // import HeartIcon from "../components/HeartIcon";
 
+import API_BASE_URL from "../config/api";
+
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -163,7 +165,7 @@ export default function Products() {
               <img
                 src={
                   product.images?.length
-                    ? `http://localhost:5000${product.images[0].preview}`
+                    ? `${API_BASE_URL}${product.images[0].preview}`
                     : "/no-image.png"
                 }
                 alt={product.title}
