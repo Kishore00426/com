@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Carousel from "../components/Carousel";
 import rawCoffee from "../assets/packet1.jpg";
 import filterCoffee from "../assets/packet2.jpg";
@@ -51,9 +52,9 @@ export default function Home() {
         </div>
       </div>
       <br />
-      <button className="mx-6 bg-zinc-900 text-white py-2 px-4 rounded-md hover:bg-brown-700 transition-colors duration-200">
-        <a href="/products" className="text-white no-underline">Show More products → </a>
-      </button>
+      <Link to="/products" className="mx-6 bg-zinc-900 text-white py-2 px-4 rounded-md hover:bg-brown-700 transition-colors duration-200 inline-block no-underline">
+        Show More products →
+      </Link>
     </main>
   );
 }
