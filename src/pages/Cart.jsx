@@ -1,7 +1,7 @@
 // src/pages/Cart.jsx
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   selectCartItems,
@@ -54,12 +54,12 @@ export default function Cart() {
           <div className="bg-zinc-950 rounded-lg shadow-md p-6 md:p-8 text-center">
             <p className="text-orange-200 text-lg">Your cart is empty!! 🛒</p>
             <p className="text-gray-500 mt-2">Add some awesome products to get started!</p>
-            <a
-              href="/products"
+            <Link
+              to="/products"
               className="inline-block mt-4 bg-brown-600 hover:bg-neutral-800 text-white py-2 px-6 rounded-md transition-colors duration-200"
             >
               Browse Products →
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="flex flex-col gap-6">
