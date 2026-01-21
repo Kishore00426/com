@@ -37,20 +37,24 @@ export default function Orders() {
           <div className="space-y-6">
             {orders.map((order) => (
               <div key={order.id} className="bg-zinc-950 rounded-lg shadow-md p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="text-left">
-                    <p className="text-gray-400 text-sm whitespace-nowrap">
-                      Order No: #{order.id} | Placed on: <span className='text-orange-200'>{new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}</span> | Payment Method: <span className='text-sky-300'>{
+                <div className="flex flex-col md:flex-row justify-between items-start mb-4">
+                  <div className="text-left mb-4 md:mb-0 w-full md:w-auto">
+                    <p className="text-gray-400 text-sm flex flex-col md:block">
+                      <span className="mb-1 md:mb-0">Order No: #{order.id}</span>
+                      <span className="hidden md:inline"> | </span>
+                      <span className="mb-1 md:mb-0">Placed on: <span className='text-orange-200'>{new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}</span></span>
+                      <span className="hidden md:inline"> | </span>
+                      <span>Payment Method: <span className='text-sky-300'>{
                         order.paymentMethod === 'card' ? 'Credit Card' :
-                        order.paymentMethod === 'paypal' ? 'PayPal' :
-                        order.paymentMethod === 'upi' ? 'UPI' :
-                        order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod
-                      }</span>
+                          order.paymentMethod === 'paypal' ? 'PayPal' :
+                            order.paymentMethod === 'upi' ? 'UPI' :
+                              order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod
+                      }</span></span>
                     </p>
                   </div>
                   <button
                     onClick={() => toggleOrderExpansion(order.id)}
-                    className="flex items-center justify-center p-4 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors"
+                    className="flex items-center justify-center p-3 md:p-4 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors self-end md:self-center ml-auto md:ml-0"
                   >
                     {expandedOrder === order.id ? (
                       <ChevronUpIcon className="h-4 w-4" />
@@ -61,50 +65,68 @@ export default function Orders() {
                 </div>
 
                 {expandedOrder === order.id && (
-                  <div className="mt-4">
+                  <div className="mt-4 animate-fadeIn">
                     <div className="overflow-x-auto mb-4">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-gray-700">
-                            <th className="text-left py-2">Product Name</th>
-                            <th className="text-center py-2">Quantity</th>
-                            <th className="text-center py-2">Price</th>
-                            <th className="text-center py-2">Discount</th>
-                            <th className="text-center py-2">Offers</th>
-                            <th className="text-center py-2">Total</th>
+                      <table className="w-full text-sm text-left">
+                        <thead className="hidden md:table-header-group text-gray-400 uppercase bg-zinc-900">
+                          <tr>
+                            <th className="py-3 px-4">Product Name</th>
+                            <th className="text-center py-3 px-4">Quantity</th>
+                            <th className="text-center py-3 px-4">Price</th>
+                            <th className="text-center py-3 px-4">Discount</th>
+                            <th className="text-center py-3 px-4">Offers</th>
+                            <th className="text-center py-3 px-4">Total</th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-gray-800">
                           {order.items.map((item, idx) => (
-                            <tr key={`${item.orderId}-${item.productId}-${idx}`} className="border-b border-gray-700">
-                              <td className="py-2">{item.title}</td>
-                              <td className="text-center py-2">{item.quantity}</td>
-                              <td className="text-center py-2">₹{Number(item.price).toFixed(2)}</td>
-                              <td className="text-center py-2">{item.discountPercentage && Number(item.discountPercentage) > 0 ? `${Number(item.discountPercentage).toFixed(0)}%` : 'N/A'}</td>
-                              <td className="text-center py-2">{item.discountPercentage && Number(item.discountPercentage) > 0 ? 'Discount Applied' : 'No Offers'}</td>
-                              <td className="text-center py-2 font-bold">₹{(Number(item.price) * item.quantity).toFixed(2)}</td>
+                            <tr key={`${item.orderId}-${item.productId}-${idx}`} className="flex flex-col md:table-row bg-zinc-900/50 md:bg-transparent mb-4 md:mb-0 rounded-lg md:rounded-none p-4 md:p-0">
+                              <td className="py-2 md:py-4 px-2 md:px-4 font-medium text-white flex justify-between md:table-cell">
+                                <span className="md:hidden text-gray-400 font-normal">Product:</span>
+                                <span>{item.title}</span>
+                              </td>
+                              <td className="text-right md:text-center py-1 md:py-4 px-2 md:px-4 flex justify-between md:table-cell">
+                                <span className="md:hidden text-gray-400">Qty:</span>
+                                {item.quantity}
+                              </td>
+                              <td className="text-right md:text-center py-1 md:py-4 px-2 md:px-4 flex justify-between md:table-cell">
+                                <span className="md:hidden text-gray-400">Price:</span>
+                                ₹{Number(item.price).toFixed(2)}
+                              </td>
+                              <td className="text-right md:text-center py-1 md:py-4 px-2 md:px-4 flex justify-between md:table-cell">
+                                <span className="md:hidden text-gray-400">Discount:</span>
+                                {item.discountPercentage && Number(item.discountPercentage) > 0 ? `${Number(item.discountPercentage).toFixed(0)}%` : <span className="text-gray-600">N/A</span>}
+                              </td>
+                              <td className="text-right md:text-center py-1 md:py-4 px-2 md:px-4 flex justify-between md:table-cell">
+                                <span className="md:hidden text-gray-400">Offer:</span>
+                                {item.discountPercentage && Number(item.discountPercentage) > 0 ? <span className="text-green-400">Applied</span> : <span className="text-gray-600">-</span>}
+                              </td>
+                              <td className="text-right md:text-center py-2 md:py-4 px-2 md:px-4 font-bold text-white flex justify-between md:table-cell border-t md:border-none border-gray-700 mt-2 md:mt-0 pt-2 md:pt-0">
+                                <span className="md:hidden text-gray-400 font-normal">Total:</span>
+                                ₹{(Number(item.price) * item.quantity).toFixed(2)}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
-                    <div className="text-left">
-                      <div className="space-y-1 text-sm ">
+                    <div className="flex flex-col md:flex-row justify-end border-t border-gray-800 pt-4">
+                      <div className="w-full md:w-1/3 space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span>Subtotal :</span>
-                          <span className='md:mr-5'>₹{Number(order.subtotal).toFixed(2)}</span>
+                          <span className="text-gray-400">Subtotal</span>
+                          <span className="font-medium">₹{Number(order.subtotal).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Tax :</span>
-                          <span className='md:mr-5'>₹{Number(order.tax).toFixed(2)}</span>
+                          <span className="text-gray-400">Tax</span>
+                          <span className="font-medium">₹{Number(order.tax).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Shipping :</span>
-                          <span className='md:mr-5'>{Number(order.shipping) === 0 ? 'FREE' : `₹${Number(order.shipping).toFixed(2)}`}</span>
+                          <span className="text-gray-400">Shipping</span>
+                          <span className="font-medium text-green-400">{Number(order.shipping) === 0 ? 'FREE' : `₹${Number(order.shipping).toFixed(2)}`}</span>
                         </div>
-                        <div className="flex justify-between font-bold border-t border-gray-600 pt-1">
+                        <div className="flex justify-between font-bold text-lg text-white border-t border-gray-700 pt-2 mt-2">
                           <span>Total</span>
-                          <span className='md:mr-5'>₹{Number(order.totalAmount).toFixed(2)}</span>
+                          <span>₹{Number(order.totalAmount).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -126,6 +148,6 @@ export default function Orders() {
           </div>
         )}
       </div>
-    </main>
+    </main >
   );
 }
